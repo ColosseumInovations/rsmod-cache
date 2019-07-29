@@ -29,6 +29,24 @@ object NoIndexFilesFound : DomainMessage()
 object MasterIndexNotLoaded : DomainMessage()
 
 /**
+ * The archive being read from a data block does not match the archive
+ * specified by the user.
+ */
+object DataArchiveMismatch : DomainMessage()
+
+/**
+ * The group being read from a data block does not match the group
+ * specified by the user.
+ */
+object DataGroupMismatch : DomainMessage()
+
+/**
+ * The block being read from a data block is not accurate to how many blocks
+ * have been read from a data block so far.
+ */
+object DataBlockMismatch : DomainMessage()
+
+/**
  * The length of a compressed block of data was out of range of the given
  * bounds.
  */
@@ -37,7 +55,18 @@ object CompressedLengthOutOfBounds : DomainMessage()
 /**
  * The given compression type is invalid.
  */
-object InvalidCompressionType : DomainMessage()
+object IllegalCompressionType : DomainMessage()
+
+/**
+ * The data being decompressed has an illegal version value.
+ */
+object IllegalVersion : DomainMessage()
+
+/**
+ * The compressed length read from the data does not match the length
+ * of the data that was actually decompressed.
+ */
+object CompressionLengthMismatch : DomainMessage()
 
 /**
  * The index file for an archive was read, but the amount of bytes read differed

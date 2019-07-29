@@ -103,15 +103,15 @@ internal object DataCodec {
             }
 
             if (block.archive != archive) {
-                throw IllegalStateException("Archive mismatch: [expected=$archive, read=${block.archive}]")
+                return Err(DataArchiveMismatch)
             }
 
             if (block.group != group) {
-                throw IllegalStateException("Group mismatch: [expected=$archive, read=${block.group}]")
+                return Err(DataGroupMismatch)
             }
 
             if (block.currBlock != currBlock) {
-                throw IllegalStateException("Block mismatch: [expected=$currBlock, read=${block.currBlock}]")
+                return Err(DataBlockMismatch)
             }
 
             System.arraycopy(tmpDataBuf, headerLength, data, totalBytesRead, payloadLength)
@@ -149,9 +149,9 @@ internal object CompressionCodec {
         val decryptedData = Xtea.decrypt(encryptedData, keys)
 
         if (packet.readableBytes >= Short.SIZE_BYTES) {
-            val version = packet.g2
+            val version = packet.g2s
             if (version == -1) {
-                throw IllegalStateException("Invalid version: $version")
+                return Err(IllegalVersion)
             }
         }
 
@@ -170,11 +170,11 @@ internal object CompressionCodec {
         val decompressedData = when (compression) {
             Compression.GZIP -> GZip.decompress(decompressedContent, compressedLength)
             Compression.BZIP2 -> BZip2.decompress(decompressedContent, compressedLength)
-            else -> throw UnsupportedOperationException("Unhandled compression type: $compression")
+            else -> return Err(IllegalCompressionType)
         }
 
         if (decompressedData.size != decompressedLength) {
-            throw AssertionError("Length of decompressed data does not match signature: [expected=$decompressedLength, actual=${decompressedData.size}]")
+            return Err(CompressionLengthMismatch)
         }
 
         return Ok(decompressedData)
@@ -191,7 +191,7 @@ internal object CompressionCodec {
             Compression.NONE -> data
             Compression.GZIP -> GZip.compress(data)
             Compression.BZIP2 -> BZip2.compress(data)
-            else -> return Err(InvalidCompressionType)
+            else -> return Err(IllegalCompressionType)
         }
 
         packet.writeByte(compression)

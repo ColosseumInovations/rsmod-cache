@@ -50,7 +50,8 @@ open class FileSystem(
     }
 
     fun loadGroup(
-        archive: Int, group: Int, tmpIdxBuf: ByteArray,
+        archive: Int, group: Int,
+        tmpIdxBuf: ByteArray,
         tmpDataBuf: ByteArray
     ): Result<ByteArray, DomainMessage> {
         val idxFile = indexFiles[archive] ?: return Err(ArchiveDoesNotExist)
