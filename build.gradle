@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'gg.rsmod'
-version '1.0-SNAPSHOT'
+version '0.5.1-SNAPSHOT'
 
 apply from: 'gradle/properties.gradle'
 
