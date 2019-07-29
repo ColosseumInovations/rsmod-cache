@@ -26,8 +26,6 @@ dependencies {
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
-
-    compile group: 'com.google.guava', name: 'guava', version: '28.0-jre'
 }
 
 compileKotlin {
