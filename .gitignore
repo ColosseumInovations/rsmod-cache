@@ -1,6 +1,6 @@
-.idea
-.gradle
-cache
-out
+/.idea
+/.gradle
+/cache
+/out
 
 error.log
