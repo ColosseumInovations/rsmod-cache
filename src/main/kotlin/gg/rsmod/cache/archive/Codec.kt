@@ -143,7 +143,7 @@ internal object CompressionCodec {
         crc.update(packet.array, 0, 5)
 
         val encryptedData = ByteArray(compressedLength + (if (compression == Compression.NONE) 0 else Int.SIZE_BYTES))
-        packet.g1Array(encryptedData)
+        packet.gdata(encryptedData)
         crc.update(encryptedData)
 
         val decryptedData = Xtea.decrypt(encryptedData, keys)
@@ -476,7 +476,7 @@ internal object GroupFileCodec {
         for (block in 0 until totalBlocks) {
             for (id in 0 until fileCount) {
                 val blockLength = blockLengths[id][block]
-                packet.g1Array(fileData[id], fileOffsets[id], blockLength)
+                packet.gdata(fileData[id], fileOffsets[id], blockLength)
                 fileOffsets[id] += blockLength
             }
         }

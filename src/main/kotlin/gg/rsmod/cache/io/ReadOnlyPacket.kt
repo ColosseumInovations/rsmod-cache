@@ -80,13 +80,13 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
             }
         }()
 
-    fun g1Array(dst: ByteArray, offset: Int, length: Int) {
+    fun gdata(dst: ByteArray, offset: Int, length: Int) {
         for (i in 0 until length) {
             dst[offset + i] = g1.toByte()
         }
     }
 
-    fun g1Array(dst: ByteArray) = g1Array(dst, 0, dst.size)
+    fun gdata(dst: ByteArray) = gdata(dst, 0, dst.size)
 
     companion object {
 
