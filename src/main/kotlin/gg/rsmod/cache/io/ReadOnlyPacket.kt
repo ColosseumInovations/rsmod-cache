@@ -90,6 +90,32 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
             (l shl 32) or r
         }()
 
+    /**
+     * Get the next values as a string until terminated.
+     */
+    val gjstr: String
+        get() {
+            val builder = StringBuilder(readableBytes)
+            while (isReadable) {
+                val next = g1
+                if (next == 0) {
+                    break
+                }
+                val character: Char =
+                    if (next in 128 until 160) {
+                        var cleansed = VALID_CHARACTERS[next - 128]
+                        if (cleansed == 0.toChar()) {
+                            cleansed = '?'
+                        }
+                        cleansed
+                    } else {
+                        '?'
+                    }
+                builder.append(character)
+            }
+            return builder.toString()
+        }
+
     fun gdata(dst: ByteArray, offset: Int, length: Int) {
         for (i in 0 until length) {
             dst[offset + i] = g1.toByte()
@@ -99,6 +125,41 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
     fun gdata(dst: ByteArray) = gdata(dst, 0, dst.size)
 
     companion object {
+
+        private val VALID_CHARACTERS = charArrayOf(
+            '\u20ac',
+            '\u0000',
+            '\u201a',
+            '\u0192',
+            '\u201e',
+            '\u2026',
+            '\u2020',
+            '\u2021',
+            '\u02c6',
+            '\u2030',
+            '\u0160',
+            '\u2039',
+            '\u0152',
+            '\u0000',
+            '\u017d',
+            '\u0000',
+            '\u0000',
+            '\u2018',
+            '\u2019',
+            '\u201c',
+            '\u201d',
+            '\u2022',
+            '\u2013',
+            '\u2014',
+            '\u02dc',
+            '\u2122',
+            '\u0161',
+            '\u203a',
+            '\u0153',
+            '\u0000',
+            '\u017e',
+            '\u0178'
+        )
 
         fun of(data: ByteArray): ReadOnlyPacket = ReadOnlyPacket(data)
     }
