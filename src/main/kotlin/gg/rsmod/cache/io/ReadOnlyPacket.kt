@@ -80,6 +80,16 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
             }
         }()
 
+    /**
+     * Get next values as a long.
+     */
+    val g8: Long
+        get() = {
+            val l = g4.toLong() and 4294967295L
+            val r = g4.toLong() and 4294967295L
+            (l shl 32) or r
+        }()
+
     fun gdata(dst: ByteArray, offset: Int, length: Int) {
         for (i in 0 until length) {
             dst[offset + i] = g1.toByte()
