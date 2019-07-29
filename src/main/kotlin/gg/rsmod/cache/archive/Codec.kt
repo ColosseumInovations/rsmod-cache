@@ -28,8 +28,8 @@ internal object DataBlockPointerCodec {
     }
 
     fun encode(pointer: FileSystemDataBlockPointer, packet: WriteOnlyPacket) {
-        packet.writeMedium(pointer.length)
-        packet.writeMedium(pointer.offset)
+        packet.p3(pointer.length)
+        packet.p3(pointer.offset)
     }
 }
 
@@ -44,10 +44,10 @@ internal object DataBlockCodec {
     }
 
     fun encode(dataBlock: FileSystemDataBlock, packet: WriteOnlyPacket) {
-        packet.writeShort(dataBlock.group)
-        packet.writeShort(dataBlock.currBlock)
-        packet.writeMedium(dataBlock.nextBlock)
-        packet.writeByte(dataBlock.archive)
+        packet.p2(dataBlock.group)
+        packet.p2(dataBlock.currBlock)
+        packet.p3(dataBlock.nextBlock)
+        packet.p1(dataBlock.archive)
     }
 
     fun decodeExtended(packet: ReadOnlyPacket): FileSystemDataBlock {
@@ -59,10 +59,10 @@ internal object DataBlockCodec {
     }
 
     fun encodeExtended(dataBlock: FileSystemDataBlock, packet: WriteOnlyPacket) {
-        packet.writeInt(dataBlock.group)
-        packet.writeShort(dataBlock.currBlock)
-        packet.writeMedium(dataBlock.nextBlock)
-        packet.writeByte(dataBlock.archive)
+        packet.p4(dataBlock.group)
+        packet.p2(dataBlock.currBlock)
+        packet.p3(dataBlock.nextBlock)
+        packet.p1(dataBlock.archive)
     }
 }
 
@@ -194,12 +194,12 @@ internal object CompressionCodec {
             else -> return Err(IllegalCompressionType)
         }
 
-        packet.writeByte(compression)
-        packet.writeInt(compressed.size)
-        packet.writeBytes(compressed)
+        packet.p1(compression)
+        packet.p4(compressed.size)
+        packet.pdata(compressed)
 
         if (version != null) {
-            packet.writeShort(version)
+            packet.p2(version)
         }
 
         if (!keys.contentEquals(Xtea.EMPTY_KEY_SET)) {

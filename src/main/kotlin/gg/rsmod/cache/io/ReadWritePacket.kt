@@ -74,31 +74,31 @@ class ReadWritePacket(private val buffer: ByteArray) {
         get() = reader.gSmart2Or4
 
     /**
-     * @see [WriteOnlyPacket.writeByte]
+     * @see [WriteOnlyPacket.p1]
      */
     fun writeByte(value: Int) {
-        writer.writeByte(value)
+        writer.p1(value)
     }
 
     /**
-     * @see [WriteOnlyPacket.writeShort]
+     * @see [WriteOnlyPacket.p2]
      */
     fun writeShort(value: Int) {
-        writer.writeShort(value)
+        writer.p2(value)
     }
 
     /**
-     * @see [WriteOnlyPacket.writeMedium]
+     * @see [WriteOnlyPacket.p3]
      */
     fun writeMedium(value: Int) {
-        writer.writeMedium(value)
+        writer.p3(value)
     }
 
     /**
-     * @see [WriteOnlyPacket.writeInt]
+     * @see [WriteOnlyPacket.p4]
      */
     fun writeInt(value: Int) {
-        writer.writeInt(value)
+        writer.p4(value)
     }
 
     companion object {

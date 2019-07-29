@@ -15,35 +15,35 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
         return this
     }
 
-    fun writeByte(value: Int) {
+    fun p1(value: Int) {
         buffer[position++] = value.toByte()
     }
 
-    fun writeShort(value: Int) {
+    fun p2(value: Int) {
         buffer[position++] = (value shr 8).toByte()
         buffer[position++] = value.toByte()
     }
 
-    fun writeMedium(value: Int) {
+    fun p3(value: Int) {
         buffer[position++] = (value shr 16).toByte()
         buffer[position++] = (value shr 8).toByte()
         buffer[position++] = value.toByte()
     }
 
-    fun writeInt(value: Int) {
+    fun p4(value: Int) {
         buffer[position++] = (value shr 24).toByte()
         buffer[position++] = (value shr 16).toByte()
         buffer[position++] = (value shr 8).toByte()
         buffer[position++] = value.toByte()
     }
 
-    fun writeBytes(src: ByteArray, srcOffset: Int, length: Int) {
+    fun pdata(src: ByteArray, srcOffset: Int, length: Int) {
         for (i in 0 until length) {
-            writeByte(src[srcOffset + i].toInt())
+            p1(src[srcOffset + i].toInt())
         }
     }
 
-    fun writeBytes(src: ByteArray) = writeBytes(src, 0, src.size)
+    fun pdata(src: ByteArray) = pdata(src, 0, src.size)
 
     companion object {
 
