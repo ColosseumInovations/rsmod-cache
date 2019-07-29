@@ -3,7 +3,7 @@ package gg.rsmod.cache.io
 /**
  * @author Tom
  */
-internal class ReadOnlyPacket(private val buffer: ByteArray) {
+class ReadOnlyPacket(private val buffer: ByteArray) {
 
     var position = 0
 
@@ -28,25 +28,25 @@ internal class ReadOnlyPacket(private val buffer: ByteArray) {
     /**
      * Get next value as a signed byte.
      */
-    internal val g1s: Int
+    val g1s: Int
         get() = this[position++].toInt()
 
     /**
      * Get next value as an unsigned byte.
      */
-    internal val g1: Int
+    val g1: Int
         get() = g1s and 0xFF
 
     /**
      * Get next values as an unsigned short.
      */
-    internal val g2: Int
+    val g2: Int
         get() = (g1 shl 8) or g1
 
     /**
      * Get next values as a signed short.
      */
-    internal val g2s: Int
+    val g2s: Int
         get() = {
             val value = g2
             if (value > Short.MAX_VALUE) {
@@ -59,19 +59,19 @@ internal class ReadOnlyPacket(private val buffer: ByteArray) {
     /**
      * Get next values as a medium.
      */
-    internal val g3: Int
+    val g3: Int
         get() = ((g1 shl 16) or (g1 shl 8) or g1)
 
     /**
      * Get next values as an int.
      */
-    internal val g4: Int
+    val g4: Int
         get() = ((g1 shl 24) or (g1 shl 16) or (g1 shl 8) or g1)
 
     /**
      * Get next values as a short or an int.
      */
-    internal val gSmart2Or4: Int
+    val gSmart2Or4: Int
         get() = {
             if (this[position] >= 0) {
                 g2

@@ -3,7 +3,7 @@ package gg.rsmod.cache.io
 /**
  * @author Tom
  */
-internal class ReadWritePacket(private val buffer: ByteArray) {
+class ReadWritePacket(private val buffer: ByteArray) {
 
     private val writer = WriteOnlyPacket(buffer)
 
@@ -34,43 +34,43 @@ internal class ReadWritePacket(private val buffer: ByteArray) {
     /**
      * @see [ReadOnlyPacket.g1s]
      */
-    internal val g1s: Int
+    val g1s: Int
         get() = reader.g1s
 
     /**
      * @see [ReadOnlyPacket.g1]
      */
-    internal val g1: Int
+    val g1: Int
         get() = reader.g1
 
     /**
      * @see [ReadOnlyPacket.g2]
      */
-    internal val g2: Int
+    val g2: Int
         get() = reader.g2
 
     /**
      * @see [ReadOnlyPacket.g2s]
      */
-    internal val g2s: Int
+    val g2s: Int
         get() = reader.g2s
 
     /**
      * @see [ReadOnlyPacket.g3]
      */
-    internal val g3: Int
+    val g3: Int
         get() = reader.g3
 
     /**
      * @see [ReadOnlyPacket.g4]
      */
-    internal val g4: Int
+    val g4: Int
         get() = reader.g4
 
     /**
      * @see [ReadOnlyPacket.gSmart2Or4]
      */
-    internal val gSmart2Or4: Int
+    val gSmart2Or4: Int
         get() = reader.gSmart2Or4
 
     /**

@@ -3,7 +3,7 @@ package gg.rsmod.cache.io
 /**
  * @author Tom
  */
-internal class WriteOnlyPacket(private val buffer: ByteArray) {
+class WriteOnlyPacket(private val buffer: ByteArray) {
 
     var position = 0
 
