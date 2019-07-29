@@ -1,16 +1,33 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.3.21'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.41'
 }
 
-group 'rsmod'
+group 'gg.rsmod'
 version '1.0-SNAPSHOT'
+
+apply from: 'gradle/properties.gradle'
 
 repositories {
     mavenCentral()
+    maven { url = 'https://dl.bintray.com/michaelbull/maven' }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    compile "io.netty:netty-buffer:4.1.36.Final"
+    compile "org.apache.commons:commons-compress:$apacheCommonsVersion"
+
+    compile "org.slf4j:slf4j-api:$slf4jVersion"
+    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
+
+    compile "com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion"
+    compile "com.michael-bull.kotlin-inline-logger:kotlin-inline-logger-jvm:$kinlineVersion"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+
+    compile group: 'com.google.guava', name: 'guava', version: '28.0-jre'
 }
 
 compileKotlin {
