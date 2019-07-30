@@ -1,6 +1,7 @@
 package gg.rsmod.cache.archive
 
 import com.github.michaelbull.result.*
+import gg.rsmod.cache.FileSystem
 import gg.rsmod.cache.domain.*
 import gg.rsmod.cache.io.FileSystemFile
 import gg.rsmod.cache.io.ReadOnlyPacket
@@ -235,38 +236,25 @@ internal object MasterIndexCodec {
             masterIndexFile.seek(indexFile.toLong() * indexLength)
             masterIndexFile.read(indexBuf, 0, indexLength)
 
-            val blockRes = DataBlockPointerCodec.decode(ReadOnlyPacket.of(indexBuf))
-            // TODO: please god sku help
-            if (blockRes.getError() != null) {
-                return Err(blockRes.getError()!!)
-            }
-
-            val blockMetadata = blockRes.get()!!
-            val length = blockMetadata.length
-            val offset = blockMetadata.offset
-
-            val dataBlock = DataCodec.decode(
-                dataFile = dataFile, archive = masterIndex, group = indexFile,
-                extended = false, offset = offset, headerLength = headerLength,
-                blockLength = dataLength, totalLength = length, tmpDataBuf = dataBuf
+            val decodeRes = decodeIndex(
+                crc = CRC32(),
+                indexFile = indexFile,
+                masterIndex = masterIndex,
+                dataFile = dataFile,
+                indexBuf = ReadOnlyPacket.of(indexBuf),
+                dataBuf = dataBuf,
+                headerLength = headerLength,
+                dataLength = dataLength
             )
 
-            // TODO: please god sku help
-            if (dataBlock.getError() != null) {
-                return Err(dataBlock.getError()!!)
+            // TODO: starts getting a bit sus below this loc... let's try
+            // to improve this
+            val decodeErr = decodeRes.getError()
+            if (decodeErr != null) {
+                return Err(decodeErr)
             }
 
-            val decompressed = CompressionCodec.decode(
-                ReadOnlyPacket.of(dataBlock.get()!!.data),
-                CRC32(), Xtea.EMPTY_KEY_SET, 0..1_000_000
-            )
-
-            // TODO: please god sku help
-            if (decompressed.getError() != null) {
-                return Err(dataBlock.getError()!!)
-            }
-
-            indexes[indexFile] = IndexCodec.decode(ReadOnlyPacket.of(decompressed.get()!!))
+            indexes[indexFile] = IndexCodec.decode(ReadOnlyPacket.of(decodeRes.get()!!))
         }
 
         return Ok(indexes)
@@ -274,6 +262,31 @@ internal object MasterIndexCodec {
 
     fun encode(packet: WriteOnlyPacket) {
         TODO()
+    }
+
+    private fun decodeIndex(
+        crc: CRC32,
+        indexFile: Int,
+        masterIndex: Int,
+        dataFile: FileSystemFile,
+        indexBuf: ReadOnlyPacket,
+        dataBuf: ByteArray,
+        headerLength: Int,
+        dataLength: Int
+    ): Result<ByteArray, DomainMessage> {
+        return DataBlockPointerCodec.decode(indexBuf)
+            .andThen { metadata ->
+                DataCodec.decode(
+                    dataFile = dataFile, archive = masterIndex, group = indexFile,
+                    extended = false, offset = metadata.offset, headerLength = headerLength,
+                    blockLength = dataLength, totalLength = metadata.length, tmpDataBuf = dataBuf
+                    )
+            }.andThen { dataBlock ->
+                CompressionCodec.decode(
+                    ReadOnlyPacket.of(dataBlock.data), crc,
+                    Xtea.EMPTY_KEY_SET, FileSystem.VALID_COMPRESSION_LENGTH
+                )
+            }
     }
 }
 
