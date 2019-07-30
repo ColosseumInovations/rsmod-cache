@@ -101,17 +101,17 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
                 if (next == 0) {
                     break
                 }
-                val character: Char =
+                val character: Int =
                     if (next in 128 until 160) {
                         var cleansed = VALID_CHARACTERS[next - 128]
-                        if (cleansed == 0.toChar()) {
+                        if (cleansed.toInt() == 0) {
                             cleansed = '?'
                         }
-                        cleansed
+                        cleansed.toInt()
                     } else {
-                        '?'
+                        next
                     }
-                builder.append(character)
+                builder.append(character.toChar())
             }
             return builder.toString()
         }
