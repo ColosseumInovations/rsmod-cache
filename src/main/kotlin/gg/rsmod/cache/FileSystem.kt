@@ -49,7 +49,7 @@ open class FileSystem(
         return Ok(Unit)
     }
 
-    fun loadFiles(archive: Archive, group: Group, data: ByteArray): Result<Unit, DomainMessage> {
+    fun loadFiles(archive: Archive, group: Group, data: ByteArray): Result<Array<ByteArray>, DomainMessage> {
         val decompressed = CompressionCodec.decode(
             ReadOnlyPacket.of(data), CRC32(),
             Xtea.EMPTY_KEY_SET, 0..1_000_000
@@ -59,15 +59,17 @@ open class FileSystem(
             return Err(decompressed.getError()!!)
         }
         val fileCount = group.files.size
+        val files: Array<ByteArray>
         if (fileCount == 1) {
             // TODO: please god sku help
-            archive.groupData[group] = arrayOf(decompressed.get()!!)
+            files = arrayOf(decompressed.get()!!)
+            archive.groupData[group] = files
         } else {
             // TODO: please god sku help
-            val files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressed.get()!!), fileCount)
+            files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressed.get()!!), fileCount)
             archive.groupData[group] = files
         }
-        return Ok(Unit)
+        return Ok(files)
     }
 
     fun getGroupData(
