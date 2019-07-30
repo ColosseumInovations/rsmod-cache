@@ -423,29 +423,17 @@ internal object GroupCodec {
             return Err(MalformedIndexRead)
         }
 
-        val pointerRes = DataBlockPointerCodec.decode(ReadOnlyPacket.of(tmpIdxBuf))
-        // TODO: please god sku help
-        if (pointerRes.getError() != null) {
-            return Err(pointerRes.getError()!!)
-        }
-
-        val dataPointer = pointerRes.get()!!
-        val dataOffset = dataPointer.offset
-        val dataLength = dataPointer.length
-
-        val dataBlock = DataCodec.decode(
-            dataFile = dataFile, archive = archive, group = group,
-            extended = extended, offset = dataOffset,
-            headerLength = dataHeaderLength, blockLength = dataBlockLength,
-            totalLength = dataLength, tmpDataBuf = tmpDataBuf
-        )
-
-        // TODO: please god sku help
-        if (dataBlock.getError() != null) {
-            return Err(dataBlock.getError()!!)
-        }
-
-        return Ok(dataBlock.get()!!.data)
+        return DataBlockPointerCodec.decode(ReadOnlyPacket.of(tmpIdxBuf))
+            .andThen { dataPointer ->
+                DataCodec.decode(
+                    dataFile = dataFile, archive = archive, group = group,
+                    extended = extended, offset = dataPointer.offset,
+                    headerLength = dataHeaderLength, blockLength = dataBlockLength,
+                    totalLength = dataPointer.length, tmpDataBuf = tmpDataBuf
+                )
+            }.andThen {
+                Ok(it.data)
+            }
     }
 
     fun encode(packet: WriteOnlyPacket) {
