@@ -115,6 +115,8 @@ open class FileSystem(
             return builder
         }
 
+        fun of(fsDirectory: String): Builder = of { directory = fsDirectory }
+
         @DslMarker
         annotation class FileSystemDslMarker
 
