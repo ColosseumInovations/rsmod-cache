@@ -1,15 +1,15 @@
 package gg.rsmod.cache
 
 import com.github.michaelbull.result.*
-import gg.rsmod.cache.archive.Archive
-import gg.rsmod.cache.archive.GroupCodec
-import gg.rsmod.cache.archive.Index
-import gg.rsmod.cache.archive.MasterIndexCodec
+import gg.rsmod.cache.archive.*
 import gg.rsmod.cache.domain.*
 import gg.rsmod.cache.io.FileSystemFile
+import gg.rsmod.cache.io.ReadOnlyPacket
 import gg.rsmod.cache.io.toFileSystemFile
+import gg.rsmod.cache.util.Xtea
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.CRC32
 
 /**
  * @author Tom
@@ -49,7 +49,28 @@ open class FileSystem(
         return Ok(Unit)
     }
 
-    fun loadGroup(
+    fun loadFiles(archive: Archive, group: Group, data: ByteArray): Result<Unit, DomainMessage> {
+        val decompressed = CompressionCodec.decode(
+            ReadOnlyPacket.of(data), CRC32(),
+            Xtea.EMPTY_KEY_SET, 0..1_000_000
+        )
+        // TODO: please god sku help
+        if (decompressed.getError() != null) {
+            return Err(decompressed.getError()!!)
+        }
+        val fileCount = group.files.size
+        if (fileCount == 1) {
+            // TODO: please god sku help
+            archive.groupData[group] = arrayOf(decompressed.get()!!)
+        } else {
+            // TODO: please god sku help
+            val files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressed.get()!!), fileCount)
+            archive.groupData[group] = files
+        }
+        return Ok(Unit)
+    }
+
+    fun getGroupData(
         archive: Int, group: Int,
         tmpIdxBuf: ByteArray,
         tmpDataBuf: ByteArray
