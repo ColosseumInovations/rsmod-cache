@@ -31,15 +31,12 @@ open class FileSystem(
 
     fun load(): Result<Any, DomainMessage> = loadMasterIndex().andThen { loadArchives() }
 
-    fun loadMasterIndex(): Result<Any, DomainMessage> {
-        val res = MasterIndexCodec.decode(
+    fun loadMasterIndex(): Result<Any, DomainMessage> =
+        MasterIndexCodec.decode(
             dataFile, masterIndexFile, masterIndex,
             indexFiles.keys.toIntArray(), DATA_HEADER_LENGTH,
             indexBlockLength, dataBlockLength
-        )
-        res.onSuccess { indexes.putAll(it) }
-        return res
-    }
+        ).map { indexes.putAll(it) }
 
     fun loadArchives(): Result<Unit, DomainMessage> {
         if (indexes.isEmpty()) {
@@ -49,28 +46,24 @@ open class FileSystem(
         return Ok(Unit)
     }
 
-    fun loadFiles(archive: Archive, group: Group, data: ByteArray): Result<Array<ByteArray>, DomainMessage> {
-        val decompressed = CompressionCodec.decode(
-            ReadOnlyPacket.of(data), CRC32(),
-            Xtea.EMPTY_KEY_SET, 0..1_000_000
-        )
-        // TODO: please god sku help
-        if (decompressed.getError() != null) {
-            return Err(decompressed.getError()!!)
+    fun loadGroupFiles(archive: Archive, group: Group, data: ByteArray): Result<Array<ByteArray>, DomainMessage> =
+        CompressionCodec.decode(
+            ReadOnlyPacket.of(data),
+            CRC32(),
+            Xtea.EMPTY_KEY_SET,
+            0..1_000_000
+        ).andThen { decompressedData ->
+            val fileCount = group.files.size
+            val files: Array<ByteArray>
+            if (fileCount == 1) {
+                files = arrayOf(decompressedData)
+                archive.groupData[group] = files
+            } else {
+                files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
+                archive.groupData[group] = files
+            }
+            Ok(files)
         }
-        val fileCount = group.files.size
-        val files: Array<ByteArray>
-        if (fileCount == 1) {
-            // TODO: please god sku help
-            files = arrayOf(decompressed.get()!!)
-            archive.groupData[group] = files
-        } else {
-            // TODO: please god sku help
-            files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressed.get()!!), fileCount)
-            archive.groupData[group] = files
-        }
-        return Ok(files)
-    }
 
     fun getGroupData(
         archive: Int, group: Int,
@@ -97,6 +90,8 @@ open class FileSystem(
     }
 
     companion object {
+
+        internal val VALID_COMPRESSION_LENGTH = 0..1_000_000
 
         internal const val DEFAULT_INDEX_FILE_PREFIX = "main_file_cache"
 
