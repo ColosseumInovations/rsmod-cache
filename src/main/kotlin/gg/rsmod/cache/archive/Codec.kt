@@ -147,7 +147,7 @@ internal object CompressionCodec {
         packet.gdata(encryptedData)
         crc.update(encryptedData)
 
-        val decryptedData = Xtea.decipher(encryptedData, keys)
+        val decryptedData = if (keys.contentEquals(Xtea.EMPTY_KEY_SET)) Xtea.decipher(encryptedData, keys) else encryptedData
 
         if (packet.readableBytes >= Short.SIZE_BYTES) {
             val version = packet.g2s
@@ -168,12 +168,19 @@ internal object CompressionCodec {
         val decompressedContent = ByteArray(decryptedData.size - Int.SIZE_BYTES)
         System.arraycopy(decryptedData, Int.SIZE_BYTES, decompressedContent, 0, decompressedContent.size)
 
-        val decompressedData = when (compression) {
+        // TODO: better way to handle exception result from decompress
+        val decompressResult = when (compression) {
             Compression.GZIP -> GZip.decompress(decompressedContent, compressedLength)
             Compression.BZIP2 -> BZip2.decompress(decompressedContent, compressedLength)
             else -> return Err(IllegalCompressionType)
         }
 
+        val err = decompressResult.getError()
+        if (err != null) {
+            return Err(IllegalCompressionType)
+        }
+
+        val decompressedData = decompressResult.get()!!
         if (decompressedData.size != decompressedLength) {
             return Err(CompressionLengthMismatch)
         }

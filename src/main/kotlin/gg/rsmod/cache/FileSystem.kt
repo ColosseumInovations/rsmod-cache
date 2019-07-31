@@ -17,6 +17,7 @@ import java.util.zip.CRC32
 open class FileSystem(
     internal val indexBlockLength: Int,
     internal val dataBlockLength: Int,
+    private val encipheredArchives: IntArray,
     private val dataFile: FileSystemFile,
     private val masterIndex: Int,
     private val masterIndexFile: FileSystemFile,
@@ -58,13 +59,14 @@ open class FileSystem(
 
         val idxBuf = ByteArray(indexBlockLength)
         val dataBuf = ByteArray(dataBlockLength)
-        for (entry in indexes) {
+        val validIndexes = indexes.filterKeys { !encipheredArchives.contains(it) }
+        for (entry in validIndexes) {
             val id = entry.key
             val index = entry.value
             val archive = archives[id] ?: return Err(ArchiveDoesNotExist)
 
             for (group in index.groups) {
-                val result = loadGroup(archive, group, idxBuf, dataBuf)
+                val result = loadGroup(archive, group, Xtea.EMPTY_KEY_SET, idxBuf, dataBuf)
 
                 // TODO: starts getting a bit sus here with err...
                 //  let's try to improve this
@@ -77,13 +79,13 @@ open class FileSystem(
         return Ok(Unit)
     }
 
-    fun loadGroup(archive: Archive, group: Group, tmpIdxBuf: ByteArray, tmpDataBuf: ByteArray): Result<Array<ByteArray>, DomainMessage> =
+    fun loadGroup(archive: Archive, group: Group, keys: IntArray, tmpIdxBuf: ByteArray, tmpDataBuf: ByteArray): Result<Array<ByteArray>, DomainMessage> =
         getGroupData(archive.id, group.id, tmpIdxBuf, tmpDataBuf)
         .andThen { compressedData ->
             CompressionCodec.decode(
                 ReadOnlyPacket.of(compressedData),
                 CRC32(),
-                Xtea.EMPTY_KEY_SET,
+                keys,
                 0..1_000_000
             )
         }.andThen { decompressedData -> putGroupData(archive, group, decompressedData) }
@@ -158,9 +160,21 @@ open class FileSystem(
         annotation class FileSystemDslMarker
 
         @FileSystemDslMarker
+        class EncipheredArchiveBuilder(private val archives: MutableSet<Int>) {
+
+            infix fun set(archive: Int) = archives.add(archive)
+        }
+
+        @FileSystemDslMarker
         class Builder {
 
             lateinit var directory: String
+
+            /**
+             * A set of ids that belong to archives that have been enciphered
+             * with XTEA and require a key to be deciphered properly.
+             */
+            private var encipheredArchives = mutableSetOf<Int>()
 
             var indexFilePrefix = DEFAULT_INDEX_FILE_PREFIX
 
@@ -206,12 +220,18 @@ open class FileSystem(
                     idxFiles.isEmpty() -> Err(NoIndexFilesFound)
                     else -> {
                         val fileSystem = FileSystem(
-                            indexBlockBytes, dataBlockBytes, dataFile!!, masterIndexId,
-                            masterIdxFile!!, idxFiles, mutableMapOf(), mutableMapOf()
+                            indexBlockBytes, dataBlockBytes, encipheredArchives.toIntArray(),
+                            dataFile!!, masterIndexId, masterIdxFile!!, idxFiles,
+                            mutableMapOf(), mutableMapOf()
                         )
                         Ok(fileSystem)
                     }
                 }
+            }
+
+            fun encipheredArchives(init: EncipheredArchiveBuilder.() -> Unit) {
+                val bldr = EncipheredArchiveBuilder(encipheredArchives)
+                init(bldr)
             }
         }
     }

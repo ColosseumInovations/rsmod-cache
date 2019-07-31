@@ -1,5 +1,6 @@
 package gg.rsmod.cache.util
 
+import com.github.michaelbull.result.Result
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.utils.IOUtils
@@ -41,19 +42,21 @@ internal object BZip2 {
         return output.toByteArray()
     }
 
-    fun decompress(data: ByteArray, length: Int): ByteArray {
-        val formatData = ByteArray(length + HEADER.size)
-        System.arraycopy(HEADER, 0, formatData, 0, HEADER.size)
+    fun decompress(data: ByteArray, length: Int): Result<ByteArray, Exception> {
+        return Result.of {
+            val formatData = ByteArray(length + HEADER.size)
+            System.arraycopy(HEADER, 0, formatData, 0, HEADER.size)
 
-        System.arraycopy(data, 0, formatData, HEADER.size, length)
+            System.arraycopy(data, 0, formatData, HEADER.size, length)
 
-        val output = ByteArrayOutputStream()
-        BZip2CompressorInputStream(ByteArrayInputStream(formatData)).use { input ->
-            output.use { output ->
-                IOUtils.copy(input, output)
+            val output = ByteArrayOutputStream()
+            BZip2CompressorInputStream(ByteArrayInputStream(formatData)).use { input ->
+                output.use { output ->
+                    IOUtils.copy(input, output)
+                }
             }
+            return@of output.toByteArray()
         }
-        return output.toByteArray()
     }
 }
 
@@ -69,13 +72,15 @@ internal object GZip {
         return output.toByteArray()
     }
 
-    fun decompress(data: ByteArray, length: Int): ByteArray {
-        val output = ByteArrayOutputStream()
-        GZIPInputStream(ByteArrayInputStream(data, 0, length)).use { input ->
-            output.use { output ->
-                IOUtils.copy(input, output)
+    fun decompress(data: ByteArray, length: Int): Result<ByteArray, Exception> {
+        return Result.of {
+            val output = ByteArrayOutputStream()
+            GZIPInputStream(ByteArrayInputStream(data, 0, length)).use { input ->
+                output.use { output ->
+                    IOUtils.copy(input, output)
+                }
             }
+            return@of output.toByteArray()
         }
-        return output.toByteArray()
     }
 }

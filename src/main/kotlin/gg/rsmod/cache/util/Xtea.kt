@@ -2,12 +2,6 @@ package gg.rsmod.cache.util
 
 import gg.rsmod.cache.io.ReadWritePacket
 
-/**
- * An implementation of the XTEA block cipher.
- *
- * @author Graham
- * @author `Discardedx2
- */
 object Xtea {
 
     val EMPTY_KEY_SET = intArrayOf(0, 0, 0, 0)
