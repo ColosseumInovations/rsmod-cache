@@ -241,8 +241,8 @@ internal object MasterIndexCodec {
                 dataLength = dataLength
             )
 
-            // TODO: starts getting a bit sus below this loc... let's try
-            // to improve this
+            // TODO: starts getting a bit sus here with err...
+            //  let's try to improve this
             val decodeErr = decodeRes.getError()
             if (decodeErr != null) {
                 return Err(decodeErr)

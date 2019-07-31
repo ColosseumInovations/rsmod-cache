@@ -29,6 +29,11 @@ object NoIndexFilesFound : DomainMessage()
 object MasterIndexNotLoaded : DomainMessage()
 
 /**
+ * The archives have not been loaded.
+ */
+object ArchivesNotLoaded : DomainMessage()
+
+/**
  * The archive being read from a data block does not match the archive
  * specified by the user.
  */

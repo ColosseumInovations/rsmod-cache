@@ -29,44 +29,68 @@ open class FileSystem(
 
     fun getArchive(id: Int): Archive? = archives[id]
 
-    fun load(): Result<Any, DomainMessage> = loadMasterIndex().andThen { loadArchives() }
+    fun loadFully(): Result<Any, DomainMessage> =
+        loadMasterIndex()
+            .andThen { loadArchives() }
+            .andThen { loadGroups() }
 
-    fun loadMasterIndex(): Result<Any, DomainMessage> =
+    fun loadMasterIndex(): Result<Unit, DomainMessage> =
         MasterIndexCodec.decode(
             dataFile, masterIndexFile, masterIndex,
             indexFiles.keys.toIntArray(), DATA_HEADER_LENGTH,
             indexBlockLength, dataBlockLength
         ).map { indexes.putAll(it) }
 
-    fun loadArchives(): Result<Unit, DomainMessage> {
+    fun loadArchives(): Result<Collection<Archive>, DomainMessage> {
         if (indexes.isEmpty()) {
             return Err(MasterIndexNotLoaded)
         }
         archives.putAll(indexes.keys.associateWith { Archive(it, mutableMapOf()) })
+        return Ok(archives.values)
+    }
+
+    fun loadGroups(): Result<Unit, DomainMessage> {
+        if (indexes.isEmpty()) {
+            return Err(MasterIndexNotLoaded)
+        } else if (archives.isEmpty()) {
+            return Err(ArchivesNotLoaded)
+        }
+
+        val idxBuf = ByteArray(indexBlockLength)
+        val dataBuf = ByteArray(dataBlockLength)
+        for (entry in indexes) {
+            val id = entry.key
+            val index = entry.value
+            val archive = archives[id] ?: return Err(ArchiveDoesNotExist)
+
+            for (group in index.groups) {
+                val result = loadGroup(archive, group, idxBuf, dataBuf)
+
+                // TODO: starts getting a bit sus here with err...
+                //  let's try to improve this
+                val err = result.getError()
+                if (err != null) {
+                    return Err(err)
+                }
+            }
+        }
         return Ok(Unit)
     }
 
-    fun loadGroupFiles(archive: Archive, group: Group, data: ByteArray): Result<Array<ByteArray>, DomainMessage> =
-        CompressionCodec.decode(
-            ReadOnlyPacket.of(data),
-            CRC32(),
-            Xtea.EMPTY_KEY_SET,
-            0..1_000_000
-        ).andThen { decompressedData ->
-            val fileCount = group.files.size
-            val files: Array<ByteArray>
-            if (fileCount == 1) {
-                files = arrayOf(decompressedData)
-                archive.groupData[group] = files
-            } else {
-                files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
-                archive.groupData[group] = files
-            }
-            Ok(files)
-        }
+    fun loadGroup(archive: Archive, group: Group, tmpIdxBuf: ByteArray, tmpDataBuf: ByteArray): Result<Array<ByteArray>, DomainMessage> =
+        getGroupData(archive.id, group.id, tmpIdxBuf, tmpDataBuf)
+        .andThen { compressedData ->
+            CompressionCodec.decode(
+                ReadOnlyPacket.of(compressedData),
+                CRC32(),
+                Xtea.EMPTY_KEY_SET,
+                0..1_000_000
+            )
+        }.andThen { decompressedData -> putGroupData(archive, group, decompressedData) }
 
     fun getGroupData(
-        archive: Int, group: Int,
+        archive: Int,
+        group: Int,
         tmpIdxBuf: ByteArray,
         tmpDataBuf: ByteArray
     ): Result<ByteArray, DomainMessage> {
@@ -81,6 +105,19 @@ open class FileSystem(
             dataHeaderLength = dataHeaderLength, dataBlockLength = dataBlockLength,
             tmpIdxBuf = tmpIdxBuf, tmpDataBuf = tmpDataBuf
         )
+    }
+
+    fun putGroupData(archive: Archive, group: Group, decompressedData: ByteArray): Result<Array<ByteArray>, DomainMessage> {
+        val fileCount = group.files.size
+        val files: Array<ByteArray>
+        if (fileCount == 1) {
+            files = arrayOf(decompressedData)
+            archive.groupData[group] = files
+        } else {
+            files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
+            archive.groupData[group] = files
+        }
+        return Ok(files)
     }
 
     override fun close() {
