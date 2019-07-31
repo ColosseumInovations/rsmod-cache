@@ -1,7 +1,8 @@
+out
+build
+
 /.idea
 /.gradle
 /cache
-/out
-/build
 
 error.log

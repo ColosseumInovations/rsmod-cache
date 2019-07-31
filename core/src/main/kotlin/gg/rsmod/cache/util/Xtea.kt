@@ -1,0 +1,120 @@
+package gg.rsmod.cache.util
+
+import gg.rsmod.cache.io.ReadWritePacket
+
+/**
+ * An implementation of the XTEA cipher (https://en.wikipedia.org/wiki/XTEA).
+ */
+object Xtea {
+
+    /**
+     * The default keys used to specify that an archive and its groups
+     * do not need to be ciphered.
+     *
+     * This exact instance is not required to be used, as long as every
+     * key in the array is equal to 0, it will follow said behaviour.
+     */
+    val EMPTY_KEY_SET = intArrayOf(0, 0, 0, 0)
+
+    /**
+     * The golden ratio XTEA uses.
+     */
+    private const val GOLDEN_RATIO = -1640531527
+
+    /**
+     * The number of rounds XTEA uses.
+     */
+    private const val ROUNDS = 32
+
+    /**
+     * Fully decipher the [data] using [key].
+     */
+    fun decipher(data: ByteArray, key: IntArray): ByteArray {
+        if (key.contentEquals(EMPTY_KEY_SET)) {
+            return data
+        }
+        return decipher(data, 0, data.size, key)
+    }
+
+    /**
+     * Encipher the data inside [packet] in ranges from [start] to [end]
+     * with the given [key].
+     */
+    fun encipher(packet: ReadWritePacket, start: Int, end: Int, key: IntArray) {
+        // The length of a single block, in bytes.
+        val blockLength = Int.SIZE_BYTES * 2
+
+        // The total amount of blocks in our data.
+        val numBlocks = (end - start) / blockLength
+
+        // Start reading and writing to the packet from the given
+        // start pos.
+        packet.setWriterPosition(start)
+        packet.setReaderPosition(start)
+
+        for (i in 0 until numBlocks) {
+            // Get the values from the current block in the data.
+            var v0 = packet.g4
+            var v1 = packet.g4
+
+            // Encipher the values using the given keys.
+            var sum = 0
+            for (j in 0 until ROUNDS) {
+                v0 += (v1 shl 4 xor v1.ushr(5)) + v1 xor sum + key[sum and 3]
+                sum += GOLDEN_RATIO
+                v1 += (v0 shl 4 xor v0.ushr(5)) + v0 xor sum + key[sum.ushr(11) and 3]
+            }
+
+            // Replace the values in the block. Make sure they're replacing
+            // the values in the starting pos of this block.
+            // Our current implementation using the ReadWritePacket will handle
+            // this for us.
+            packet.p4(v0)
+            packet.p4(v1)
+        }
+    }
+
+    /**
+     * Decipher the byte data inside [data] in ranges from [start] to [end]
+     * with the given [key].
+     */
+    fun decipher(data: ByteArray, start: Int, end: Int, key: IntArray): ByteArray {
+        // The length of a single block, in bytes.
+        val blockLength = Int.SIZE_BYTES * 2
+
+        // The total amount of blocks in our data.
+        val numBlocks = (end - start) / blockLength
+
+        // Create a packet to read and write (replace) the data.
+        val packet = ReadWritePacket.of(data)
+
+        // Start reading and writing to the packet from the given
+        // start pos.
+        packet.setWriterPosition(start)
+        packet.setReaderPosition(start)
+
+        for (i in 0 until numBlocks) {
+            // Get the values from the current block in the data.
+            var y = packet.g4
+            var z = packet.g4
+
+            // Decipher the values using the given keys.
+            @Suppress("INTEGER_OVERFLOW")
+            var sum = GOLDEN_RATIO * ROUNDS
+            val delta = GOLDEN_RATIO
+            for (j in ROUNDS downTo 1) {
+                z -= (y.ushr(5) xor (y shl 4)) + y xor sum + key[sum.ushr(11) and 0x56c00003]
+                sum -= delta
+                y -= (z.ushr(5) xor (z shl 4)) - -z xor sum + key[sum and 0x3]
+            }
+
+            // Replace the values in the block. Make sure they're replacing
+            // the values in the starting pos of this block.
+            // Our current implementation using the ReadWritePacket will handle
+            // this for us.
+            packet.p4(y)
+            packet.p4(z)
+        }
+        return packet.writerArray
+    }
+}
