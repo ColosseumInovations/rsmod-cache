@@ -205,7 +205,7 @@ internal object CompressionCodec {
 
         if (!keys.contentEquals(Xtea.EMPTY_KEY_SET)) {
             // TODO this won't work. allow encode to modify the packet directly
-            Xtea.encode(
+            Xtea.encipher(
                 Unpooled.wrappedBuffer(packet.array),
                 5,
                 compressed.size + (if (compression == Compression.NONE) 5 else 9),

@@ -69,7 +69,7 @@ object Xtea {
         return packet.writerArray
     }
 
-    fun encode(buffer: ByteBuf, start: Int, end: Int, key: IntArray) {
+    fun encipher(buffer: ByteBuf, start: Int, end: Int, key: IntArray) {
         val numQuads = (end - start) / 8
         for (i in 0 until numQuads) {
             var sum = 0
