@@ -1,102 +1,104 @@
 package gg.rsmod.cache.domain
 
-sealed class DomainMessage
+sealed class DomainMessage(private val reason: String) {
+    override fun toString(): String = reason
+}
 
 /**
  * The directory for the [gg.rsmod.cache.FileSystem] was not set.
  */
-object FileSystemDirectoryNotSet : DomainMessage()
+object FileSystemDirectoryNotSet : DomainMessage("File system directory was not set")
 
 /**
  * The main data file was not found in the file system directory.
  */
-object DataFileNotFound : DomainMessage()
+object DataFileNotFound : DomainMessage("Data file was not found in the file system directory")
 
 /**
  * The Master Index file was not found in the file system directory.
  */
-object MasterIndexFileNotFound : DomainMessage()
+object MasterIndexFileNotFound : DomainMessage("Master index file was not found in the file system directory")
 
 /**
  * No index files were found in the file system directory.
  */
-object NoIndexFilesFound : DomainMessage()
+object NoIndexFilesFound : DomainMessage("No idx files were not found in the file system directory")
 
 /**
  * The master index has not been loaded and archives cannot be loaded onto
  * memory.
  */
-object MasterIndexNotLoaded : DomainMessage()
+object MasterIndexNotLoaded : DomainMessage("Master index has not been initialised")
 
 /**
  * The archives have not been loaded.
  */
-object ArchivesNotLoaded : DomainMessage()
+object ArchivesNotLoaded : DomainMessage("Archives have not been initialised")
 
 /**
  * The archive being read from a data block does not match the archive
  * specified by the user.
  */
-object DataArchiveMismatch : DomainMessage()
+object DataArchiveMismatch : DomainMessage("Data block contains the incorrect archive id")
 
 /**
  * The group being read from a data block does not match the group
  * specified by the user.
  */
-object DataGroupMismatch : DomainMessage()
+object DataGroupMismatch : DomainMessage("Data block contains the incorrect group id")
 
 /**
  * The block being read from a data block is not accurate to how many blocks
  * have been read from a data block so far.
  */
-object DataBlockMismatch : DomainMessage()
+object DataBlockMismatch : DomainMessage("Data block index does not match the current iteration")
 
 /**
  * The length of a compressed block of data was out of range of the given
  * bounds.
  */
-object CompressedLengthOutOfBounds : DomainMessage()
+object CompressedLengthOutOfBounds : DomainMessage("Packed compression length is out of bounds")
 
 /**
  * The given compression type is invalid.
  */
-object IllegalCompressionType : DomainMessage()
+object IllegalCompressionType : DomainMessage("Packed compression type is invalid")
 
 /**
  * The data being decompressed has an illegal version value.
  */
-object IllegalVersion : DomainMessage()
+object IllegalVersion : DomainMessage("Packed compressed version is invalid")
 
 /**
  * The compressed length read from the data does not match the length
  * of the data that was actually decompressed.
  */
-object CompressionLengthMismatch : DomainMessage()
+object CompressionLengthMismatch : DomainMessage("Packed decompression length mismatch with decompressed data length")
 
 /**
  * The index file for an archive was read, but the amount of bytes read differed
  * from the amount of bytes specified per index data block.
  */
-object MalformedIndexRead : DomainMessage()
+object MalformedIndexRead : DomainMessage("Unexpected end of file for index")
 
 /**
  * The archive, or its index, being requested does not exist.
  */
-object ArchiveDoesNotExist : DomainMessage()
+object ArchiveDoesNotExist : DomainMessage("Archive or its index does not exist")
 
 /**
  * The length of a data block that was read from an index file was an illegal
  * value.
  */
-object DataBlockPointerInvalidLength : DomainMessage()
+object DataBlockPointerInvalidLength : DomainMessage("Invalid packed length in index")
 
 /**
  * The byte offset of a data block that was read from an index file was an
  * illegal value.
  */
-object DataBlockPointerInvalidOffset : DomainMessage()
+object DataBlockPointerInvalidOffset : DomainMessage("Invalid packed offset in index")
 
 /**
  * The data block was not read to the extent it was asked.
  */
-object DataBlockReadMalformation : DomainMessage()
+object DataBlockReadMalformation : DomainMessage("Data block could not be fully read")
