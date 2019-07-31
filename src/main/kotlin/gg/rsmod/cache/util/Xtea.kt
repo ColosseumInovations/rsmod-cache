@@ -1,7 +1,6 @@
 package gg.rsmod.cache.util
 
 import gg.rsmod.cache.io.ReadWritePacket
-import io.netty.buffer.ByteBuf
 
 /**
  * An implementation of the XTEA block cipher.
@@ -50,6 +49,7 @@ object Xtea {
             var y = packet.g4
             var z = packet.g4
 
+            // Decipher the values using the given keys.
             @Suppress("INTEGER_OVERFLOW")
             var sum = GOLDEN_RATIO * ROUNDS
             val delta = GOLDEN_RATIO
@@ -69,19 +69,37 @@ object Xtea {
         return packet.writerArray
     }
 
-    fun encipher(buffer: ByteBuf, start: Int, end: Int, key: IntArray) {
-        val numQuads = (end - start) / 8
-        for (i in 0 until numQuads) {
+    fun encipher(packet: ReadWritePacket, start: Int, end: Int, keys: IntArray) {
+        // The length of a single block, in bytes.
+        val blockLength = Int.SIZE_BYTES * 2
+
+        // The total amount of blocks in our data.
+        val numBlocks = (end - start) / blockLength
+
+        // Start reading and writing to the packet from the given
+        // start pos.
+        packet.setWriterPosition(start)
+        packet.setReaderPosition(start)
+
+        for (i in 0 until numBlocks) {
+            // Get the values from the current block in the data.
+            var v0 = packet.g4
+            var v1 = packet.g4
+
+            // Encipher the values using the given keys.
             var sum = 0
-            var v0 = buffer.getInt(start + i * 8)
-            var v1 = buffer.getInt(start + i * 8 + 4)
             for (j in 0 until ROUNDS) {
-                v0 += (v1 shl 4 xor v1.ushr(5)) + v1 xor sum + key[sum and 3]
+                v0 += (v1 shl 4 xor v1.ushr(5)) + v1 xor sum + keys[sum and 3]
                 sum += GOLDEN_RATIO
-                v1 += (v0 shl 4 xor v0.ushr(5)) + v0 xor sum + key[sum.ushr(11) and 3]
+                v1 += (v0 shl 4 xor v0.ushr(5)) + v0 xor sum + keys[sum.ushr(11) and 3]
             }
-            buffer.setInt(start + i * 8, v0)
-            buffer.setInt(start + i * 8 + 4, v1)
+
+            // Replace the values in the block. Make sure they're replacing
+            // the values in the starting pos of this block.
+            // Our current implementation using the ReadWritePacket will handle
+            // this for us.
+            packet.p4(v0)
+            packet.p4(v1)
         }
     }
 }
