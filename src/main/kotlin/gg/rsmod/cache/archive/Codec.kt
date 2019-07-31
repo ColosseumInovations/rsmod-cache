@@ -5,9 +5,9 @@ import gg.rsmod.cache.FileSystem
 import gg.rsmod.cache.domain.*
 import gg.rsmod.cache.io.FileSystemFile
 import gg.rsmod.cache.io.ReadOnlyPacket
+import gg.rsmod.cache.io.ReadWritePacket
 import gg.rsmod.cache.io.WriteOnlyPacket
 import gg.rsmod.cache.util.*
-import io.netty.buffer.Unpooled
 import java.util.zip.CRC32
 import kotlin.math.min
 
@@ -186,7 +186,7 @@ internal object CompressionCodec {
         compression: Int,
         version: Int?,
         keys: IntArray,
-        packet: WriteOnlyPacket
+        packet: ReadWritePacket
     ): Result<Unit, DomainMessage> {
         val compressed = when (compression) {
             Compression.NONE -> data
@@ -204,13 +204,7 @@ internal object CompressionCodec {
         }
 
         if (!keys.contentEquals(Xtea.EMPTY_KEY_SET)) {
-            // TODO this won't work. allow encode to modify the packet directly
-            Xtea.encipher(
-                Unpooled.wrappedBuffer(packet.array),
-                5,
-                compressed.size + (if (compression == Compression.NONE) 5 else 9),
-                keys
-            )
+            Xtea.encipher(packet, 5, compressed.size + (if (compression == Compression.NONE) 5 else 9), keys)
         }
         return Ok(Unit)
     }
