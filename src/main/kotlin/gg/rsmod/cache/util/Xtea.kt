@@ -1,8 +1,14 @@
 package gg.rsmod.cache.util
 
+import gg.rsmod.cache.io.ReadWritePacket
 import io.netty.buffer.ByteBuf
-import java.nio.ByteBuffer
 
+/**
+ * An implementation of the XTEA block cipher.
+ *
+ * @author Graham
+ * @author `Discardedx2
+ */
 object Xtea {
 
     val EMPTY_KEY_SET = intArrayOf(0, 0, 0, 0)
@@ -17,35 +23,50 @@ object Xtea {
      */
     private const val ROUNDS = 32
 
-    fun decrypt(data: ByteArray, keys: IntArray): ByteArray {
+    fun decipher(data: ByteArray, keys: IntArray): ByteArray {
         if (keys.contentEquals(EMPTY_KEY_SET)) {
             return data
         }
-        return decode(keys, data, 0, data.size)
+        return decipher(keys, data, 0, data.size)
     }
 
-    fun decode(key: IntArray, data: ByteArray, start: Int, end: Int): ByteArray {
-        val numBlocks = (end - start) / 8
+    fun decipher(keys: IntArray, data: ByteArray, start: Int, end: Int): ByteArray {
+        // The length of a single block, in bytes.
+        val blockLength = Int.SIZE_BYTES * 2
 
-        val buffer = ByteBuffer.wrap(data)
-        buffer.position(start)
+        // The total amount of blocks in our data.
+        val numBlocks = (end - start) / blockLength
+
+        // Create a packet to read and write (replace) the data.
+        val packet = ReadWritePacket.of(data)
+
+        // Start reading and writing to the packet from the given
+        // start pos.
+        packet.setWriterPosition(start)
+        packet.setReaderPosition(start)
 
         for (i in 0 until numBlocks) {
-            var y = buffer.int
-            var z = buffer.int
+            // Get the values from the current block in the data.
+            var y = packet.g4
+            var z = packet.g4
+
             @Suppress("INTEGER_OVERFLOW")
             var sum = GOLDEN_RATIO * ROUNDS
             val delta = GOLDEN_RATIO
             for (j in ROUNDS downTo 1) {
-                z -= (y.ushr(5) xor (y shl 4)) + y xor sum + key[sum.ushr(11) and 0x56c00003]
+                z -= (y.ushr(5) xor (y shl 4)) + y xor sum + keys[sum.ushr(11) and 0x56c00003]
                 sum -= delta
-                y -= (z.ushr(5) xor (z shl 4)) - -z xor sum + key[sum and 0x3]
+                y -= (z.ushr(5) xor (z shl 4)) - -z xor sum + keys[sum and 0x3]
             }
-            buffer.position(buffer.position() - 8)
-            buffer.putInt(y)
-            buffer.putInt(z)
+
+            // Replace the values in the block. Make sure they're replacing
+            // the values in the starting pos of this block.
+            // Our current implementation using the ReadWritePacket will handle
+            // this for us.
+            packet.p4(y)
+            packet.p4(z)
         }
-        return buffer.array()
+        return packet.writerArray
     }
 
     fun encode(buffer: ByteBuf, start: Int, end: Int, key: IntArray) {
