@@ -126,6 +126,15 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
 
     companion object {
 
+        /**
+         * Create a [ReadOnlyPacket] with [data] as its backing array.
+         */
+        fun of(data: ByteArray): ReadOnlyPacket = ReadOnlyPacket(data)
+
+        /**
+         * An array of the valid characters that can be used in strings stored inside
+         * the file system.
+         */
         private val VALID_CHARACTERS = charArrayOf(
             '\u20ac',
             '\u0000',
@@ -160,7 +169,5 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
             '\u017e',
             '\u0178'
         )
-
-        fun of(data: ByteArray): ReadOnlyPacket = ReadOnlyPacket(data)
     }
 }

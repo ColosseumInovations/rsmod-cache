@@ -17,6 +17,12 @@ class ReadWritePacket(private val buffer: ByteArray) {
     val readerArray: ByteArray
         get() = writer.array
 
+    val writerPosition: Int
+        get() = writer.position
+
+    val readerPosition: Int
+        get() = reader.position
+
     fun reset(): ReadWritePacket {
         writer.reset()
         reader.reset()
@@ -76,33 +82,39 @@ class ReadWritePacket(private val buffer: ByteArray) {
     /**
      * @see [WriteOnlyPacket.p1]
      */
-    fun writeByte(value: Int) {
-        writer.p1(value)
-    }
+    fun p1(value: Int) = writer.p1(value)
 
     /**
      * @see [WriteOnlyPacket.p2]
      */
-    fun writeShort(value: Int) {
-        writer.p2(value)
-    }
+    fun p2(value: Int) = writer.p2(value)
 
     /**
      * @see [WriteOnlyPacket.p3]
      */
-    fun writeMedium(value: Int) {
-        writer.p3(value)
-    }
+    fun p3(value: Int) = writer.p3(value)
 
     /**
      * @see [WriteOnlyPacket.p4]
      */
-    fun writeInt(value: Int) {
-        writer.p4(value)
-    }
+    fun p4(value: Int) = writer.p4(value)
+
+    /**
+     * @see [WriteOnlyPacket.pdata]
+     */
+    fun pdata(src: ByteArray, srcOffset: Int, length: Int) = writer.pdata(src, srcOffset, length)
+
+    /**
+     * @see [WriteOnlyPacket.pdata]
+     */
+    fun pdata(src: ByteArray) = writer.pdata(src)
 
     companion object {
 
+        /**
+         * Create a [ReadWritePacket] with [data] as its data for both
+         * the backing [WriteOnlyPacket] and [ReadOnlyPacket].
+         */
         fun of(data: ByteArray): ReadWritePacket = ReadWritePacket(data)
     }
 }

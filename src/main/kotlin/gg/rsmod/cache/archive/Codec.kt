@@ -147,7 +147,7 @@ internal object CompressionCodec {
         packet.gdata(encryptedData)
         crc.update(encryptedData)
 
-        val decryptedData = Xtea.decrypt(encryptedData, keys)
+        val decryptedData = Xtea.decipher(encryptedData, keys)
 
         if (packet.readableBytes >= Short.SIZE_BYTES) {
             val version = packet.g2s
