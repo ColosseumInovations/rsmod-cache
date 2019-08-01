@@ -85,6 +85,9 @@ open class FileSystem(
             Ok(archives)
         }
 
+    /**
+     * Load and set the group data corresponding to each archive.
+     */
     fun loadGroups(): Result<Unit, DomainMessage> {
         if (indexes.isEmpty()) {
             return Err(MasterIndexNotLoaded)
@@ -114,6 +117,9 @@ open class FileSystem(
         return Ok(Unit)
     }
 
+    /**
+     * Load and set the data for [group] in [archive].
+     */
     fun loadGroup(
         archive: Archive,
         group: Group,
@@ -131,6 +137,9 @@ open class FileSystem(
                 )
             }.andThen { decompressedData -> putGroupData(archive, group, decompressedData) }
 
+    /**
+     * Get the data block in a group.
+     */
     fun getGroupData(
         archive: Int,
         group: Int,
@@ -150,6 +159,10 @@ open class FileSystem(
         )
     }
 
+    /**
+     * Put the group data ([decompressedData]) in [archive] paired to
+     * [group].
+     */
     fun putGroupData(
         archive: Archive,
         group: Group,
@@ -178,6 +191,9 @@ open class FileSystem(
             Err(IndexesAlreadySet)
         }
 
+    /**
+     * Put the [newArchives] into the [archives] map.
+     */
     fun putArchives(newArchives: Map<Int, Archive>): Result<Unit, DomainMessage> =
         if (archives.isEmpty()) {
             archives.putAll(newArchives)
