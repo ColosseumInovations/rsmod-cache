@@ -41,7 +41,7 @@ class NamedGroupFile(
  * An [Index] contains metadata for an [Archive].
  */
 open class Index(
-    val format: Int, val flags: Int, val groups: Array<Group>
+    val format: Int, val flags: Int, val groups: MutableMap<Int, Group>
 ) {
     companion object {
         const val HASHED_NAME_BIT = 0x01

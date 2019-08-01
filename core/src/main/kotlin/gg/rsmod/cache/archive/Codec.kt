@@ -367,7 +367,7 @@ internal object IndexCodec {
             }
         }
 
-        val groups = mutableListOf<Group>()
+        val groups = mutableMapOf<Int, Group>()
         for (i in 0 until groupCount) {
             val groupId = groupIds[i]
             val groupName = groupNames?.get(i)
@@ -390,10 +390,10 @@ internal object IndexCodec {
                 Group(groupId, groupCrc, groupVersion, files.toTypedArray())
             }
 
-            groups.add(group)
+            groups[group.id] = group
         }
 
-        return Index(format, flags, groups.toTypedArray())
+        return Index(format, flags, groups)
     }
 
     fun encode(packet: WriteOnlyPacket) {

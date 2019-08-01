@@ -100,7 +100,7 @@ open class FileSystem(
             val index = entry.value
             val archive = archives[id] ?: return Err(ArchiveDoesNotExist)
 
-            for (group in index.groups) {
+            for (group in index.groups.values) {
                 val result = loadGroup(archive, group, Xtea.EMPTY_KEY_SET, idxBuf, dataBuf)
 
                 // TODO: starts getting a bit sus here with err...
