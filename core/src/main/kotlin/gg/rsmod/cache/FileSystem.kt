@@ -18,17 +18,17 @@ import java.util.zip.CRC32
  * to the game resource files.
  *
  * @param indexBlockLength the length, in bytes, of each data block in an index sector;
- *  usually 6 bytes.
+ * usually 6 bytes.
  * @param dataBlockLength the length, in bytes, of each data block in a data sector;
- *  usually 520 bytes.
- * @param encipheredArchives an array of archive ids that are enciphered through XTEA
- *  and require keys in order to be read properly.
+ * usually 520 bytes.
+ * @param cipheredArchives an array of archive ids that are ciphered through XTEA
+ * and require keys in order to be read/written properly.
  * @param masterIndex the id of the 'master index', which contains metadata pointing
- *  to the index of each archive.
+ * to the index of each archive.
  * @param dataFile the file that contains all the actual data for each archive, their
- *  groups and the corresponding group files.
+ * groups and the corresponding group files.
  * @param indexFiles idx files paired with their corresponding id. This does not include
- *  the master index file.
+ * the master index file.
  * @param indexes the virtual [Index] files paired with their corresponding id.
  * @param archives the virtual [Archive] files paired with their corresponding id.
  *
@@ -37,7 +37,7 @@ import java.util.zip.CRC32
 open class FileSystem(
     internal val indexBlockLength: Int,
     internal val dataBlockLength: Int,
-    private val encipheredArchives: IntArray,
+    private val cipheredArchives: IntArray,
     private val masterIndex: Int,
     private val masterIndexFile: FileSystemFile,
     private val dataFile: FileSystemFile,
@@ -97,7 +97,7 @@ open class FileSystem(
 
         val idxBuf = ByteArray(indexBlockLength)
         val dataBuf = ByteArray(dataBlockLength)
-        val validIndexes = indexes.filterKeys { !encipheredArchives.contains(it) }
+        val validIndexes = indexes.filterKeys { !cipheredArchives.contains(it) }
         for (entry in validIndexes) {
             val id = entry.key
             val index = entry.value
