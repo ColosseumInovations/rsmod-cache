@@ -303,6 +303,7 @@ internal object IndexCodec {
         val formatType = packet.g1
         val format = when (formatType) {
             Format.NONE -> 0
+            Format.SHORT -> packet.g2
             else -> packet.g4
         }
 
