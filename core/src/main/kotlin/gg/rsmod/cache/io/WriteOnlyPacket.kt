@@ -1,15 +1,41 @@
 package gg.rsmod.cache.io
 
 /**
+ * A write-only packet is a buffer containing an array of bytes and a pointer
+ * of the last position in said array that it has written data to.
+ *
+ * This buffer can only be used to write data and not read from it.
+ * If you need to read from a buffer, consider using [ReadOnlyPacket]
+ * or [ReadWritePacket].
+ *
  * @author Tom
  */
 class WriteOnlyPacket(private val buffer: ByteArray) {
 
+    /**
+     * The last position in [array] that was accessed.
+     */
     var position = 0
 
+    /**
+     * Create a [WriteOnlyPacket] with a backing-array the size of [capacity].
+     */
+    constructor(capacity: Int) : this(ByteArray(capacity))
+
+    /**
+     * Get the [Byte] located in position [index] on the backing array.
+     */
+    operator fun get(index: Int): Byte = buffer[index]
+
+    /**
+     * The backing array for this packet.
+     */
     val array: ByteArray
         get() = buffer
 
+    /**
+     * Reset the write position of this packet.
+     */
     fun reset(): WriteOnlyPacket {
         position = 0
         return this

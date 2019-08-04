@@ -1,25 +1,54 @@
 package gg.rsmod.cache.io
 
 /**
+ * A read-only packet is a buffer containing an array of bytes and a pointer
+ * of the last position in said array that it has read data from.
+ *
+ * This buffer can only be used to read data and not write to it.
+ * If you need to write to a buffer, consider using [WriteOnlyPacket]
+ * or [ReadWritePacket].
+ *
  * @author Tom
  */
 class ReadOnlyPacket(private val buffer: ByteArray) {
 
+    /**
+     * The last position in [array] that was accessed.
+     */
     var position = 0
 
+    /**
+     * Create a [ReadOnlyPacket] with a backing-array the size of [capacity].
+     */
     constructor(capacity: Int) : this(ByteArray(capacity))
 
+    /**
+     * Get the [Byte] located in position [index] on the backing array.
+     */
     operator fun get(index: Int): Byte = buffer[index]
 
+    /**
+     * The backing array for this packet.
+     */
     val array: ByteArray
         get() = buffer
 
+    /**
+     * The amount of bytes that can be read from this packet taking the
+     * current [position] into account.
+     */
     val readableBytes: Int
         get() = buffer.size - position
 
+    /**
+     * Check if this packet has any more [readableBytes].
+     */
     val isReadable: Boolean
         get() = readableBytes > 0
 
+    /**
+     * Reset the read position of this packet.
+     */
     fun reset(): ReadOnlyPacket {
         position = 0
         return this
@@ -116,12 +145,20 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
             return builder.toString()
         }
 
+    /**
+     * Get the next [length] amount of values from this packet and put them
+     * on [dst] starting from [offset].
+     */
     fun gdata(dst: ByteArray, offset: Int, length: Int) {
         for (i in 0 until length) {
             dst[offset + i] = g1.toByte()
         }
     }
 
+    /**
+     * Get and put the next values from this packet and put them on [dst].
+     * The amount of values being put is equal to the size of [dst].
+     */
     fun gdata(dst: ByteArray) = gdata(dst, 0, dst.size)
 
     companion object {
