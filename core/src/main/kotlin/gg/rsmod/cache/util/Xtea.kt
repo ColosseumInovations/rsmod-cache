@@ -11,8 +11,9 @@ object Xtea {
      * The default keys used to specify that an archive and its groups
      * do not need to be ciphered.
      *
-     * This exact instance is not required to be used, as long as every
-     * key in the array is equal to 0, it will follow said behaviour.
+     * You do not need to use this exact singleton, as long as every
+     * key in the array is equal to 0, it will follow the previously
+     * stated behaviour.
      */
     val EMPTY_KEY_SET = intArrayOf(0, 0, 0, 0)
 
