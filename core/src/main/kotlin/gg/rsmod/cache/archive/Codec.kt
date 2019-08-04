@@ -302,14 +302,14 @@ internal object IndexCodec {
     fun decode(packet: ReadOnlyPacket): Index {
         val formatType = packet.g1
         val format = when (formatType) {
-            FormatType.NONE -> 0
+            Format.NONE -> 0
             else -> packet.g4
         }
 
         val flags = packet.g1
         val hashedNames = (Index.HASHED_NAME_BIT and flags) != 0
 
-        val groupCount = packet.readFormatSmart(formatType)
+        val groupCount = packet.gSmartOr2(formatType)
         val groupIds = IntArray(groupCount)
         val groupNames = if (hashedNames) IntArray(groupCount) else null
         val groupCrcs = IntArray(groupCount)
@@ -320,7 +320,7 @@ internal object IndexCodec {
 
         var increment = 0
         for (i in 0 until groupCount) {
-            val delta = packet.readFormatSmart(formatType)
+            val delta = packet.gSmartOr2(formatType)
             increment += delta
             groupIds[i] = increment
         }
@@ -340,7 +340,7 @@ internal object IndexCodec {
         }
 
         for (i in 0 until groupCount) {
-            val fileCount = packet.readFormatSmart(formatType)
+            val fileCount = packet.gSmartOr2(formatType)
             groupFileCounts[i] = fileCount
         }
 
@@ -350,7 +350,7 @@ internal object IndexCodec {
 
             increment = 0
             for (j in 0 until fileCount) {
-                val delta = packet.readFormatSmart(formatType)
+                val delta = packet.gSmartOr2(formatType)
                 increment += delta
                 fileIds[j] = increment
             }
@@ -400,7 +400,7 @@ internal object IndexCodec {
         TODO()
     }
 
-    private fun ReadOnlyPacket.readFormatSmart(format: Int): Int = if (format == FormatType.SMART) {
+    private fun ReadOnlyPacket.gSmartOr2(format: Int): Int = if (format == Format.SMART) {
         gSmart2Or4
     } else {
         g2

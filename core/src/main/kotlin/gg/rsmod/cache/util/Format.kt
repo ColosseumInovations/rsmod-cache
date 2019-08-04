@@ -3,7 +3,7 @@ package gg.rsmod.cache.util
 /**
  * @author Tom
  */
-internal object FormatType {
+internal object Format {
 
     const val NONE = 5
 
