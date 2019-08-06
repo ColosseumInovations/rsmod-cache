@@ -1,14 +1,38 @@
 package gg.rsmod.cache.archive
 
-import com.github.michaelbull.result.*
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.andThen
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.getError
 import gg.rsmod.cache.FileSystem
-import gg.rsmod.cache.domain.*
+import gg.rsmod.cache.domain.CompressedLengthOutOfBounds
+import gg.rsmod.cache.domain.CompressionLengthMismatch
+import gg.rsmod.cache.domain.DataArchiveMismatch
+import gg.rsmod.cache.domain.DataBlockMismatch
+import gg.rsmod.cache.domain.DataBlockPointerInvalidLength
+import gg.rsmod.cache.domain.DataBlockPointerInvalidOffset
+import gg.rsmod.cache.domain.DataBlockReadMalformation
+import gg.rsmod.cache.domain.DataGroupMismatch
+import gg.rsmod.cache.domain.DomainMessage
+import gg.rsmod.cache.domain.IllegalCompressionType
+import gg.rsmod.cache.domain.IllegalVersion
+import gg.rsmod.cache.domain.MalformedIndexRead
 import gg.rsmod.cache.io.FileSystemFile
 import gg.rsmod.cache.io.ReadOnlyPacket
 import gg.rsmod.cache.io.ReadWritePacket
 import gg.rsmod.cache.io.WriteOnlyPacket
-import gg.rsmod.cache.util.*
+import gg.rsmod.cache.util.BZip2
+import gg.rsmod.cache.util.Compression
+import gg.rsmod.cache.util.FileSystemData
+import gg.rsmod.cache.util.FileSystemDataBlock
+import gg.rsmod.cache.util.FileSystemDataBlockPointer
+import gg.rsmod.cache.util.Format
+import gg.rsmod.cache.util.GZip
+import gg.rsmod.cache.util.Xtea
 import java.util.zip.CRC32
+import kotlin.collections.set
 import kotlin.math.min
 
 internal object DataBlockPointerCodec {
@@ -41,12 +65,12 @@ internal object DataBlockCodec {
         val currBlock = packet.g2
         val nextBlock = packet.g3
         val archive = packet.g1
-        return FileSystemDataBlock(archive = archive, group = group, currBlock = currBlock, nextBlock = nextBlock)
+        return FileSystemDataBlock(archive = archive, group = group, currBlockIndex = currBlock, nextBlock = nextBlock)
     }
 
     fun encode(dataBlock: FileSystemDataBlock, packet: WriteOnlyPacket) {
         packet.p2(dataBlock.group)
-        packet.p2(dataBlock.currBlock)
+        packet.p2(dataBlock.currBlockIndex)
         packet.p3(dataBlock.nextBlock)
         packet.p1(dataBlock.archive)
     }
@@ -56,12 +80,12 @@ internal object DataBlockCodec {
         val currBlock = packet.g2
         val nextBlock = packet.g3
         val archive = packet.g1
-        return FileSystemDataBlock(archive = archive, group = group, currBlock = currBlock, nextBlock = nextBlock)
+        return FileSystemDataBlock(archive = archive, group = group, currBlockIndex = currBlock, nextBlock = nextBlock)
     }
 
     fun encodeExtended(dataBlock: FileSystemDataBlock, packet: WriteOnlyPacket) {
         packet.p4(dataBlock.group)
-        packet.p2(dataBlock.currBlock)
+        packet.p2(dataBlock.currBlockIndex)
         packet.p3(dataBlock.nextBlock)
         packet.p1(dataBlock.archive)
     }
@@ -111,7 +135,7 @@ internal object DataCodec {
                 return Err(DataGroupMismatch)
             }
 
-            if (block.currBlock != currBlock) {
+            if (block.currBlockIndex != currBlock) {
                 return Err(DataBlockMismatch)
             }
 

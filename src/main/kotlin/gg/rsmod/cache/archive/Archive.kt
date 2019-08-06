@@ -44,6 +44,10 @@ open class Index(
     val format: Int, val flags: Int, val groups: MutableMap<Int, Group>
 ) {
     companion object {
+        /**
+         * The bit used to identify that the groups inside the archive
+         * that this index represents has names that have been hashed.
+         */
         const val HASHED_NAME_BIT = 0x01
     }
 }
