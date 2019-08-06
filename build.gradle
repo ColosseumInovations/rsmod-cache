@@ -3,32 +3,29 @@ plugins {
 }
 
 apply from: 'gradle/properties.gradle'
+apply plugin: 'org.jetbrains.kotlin.jvm'
 
-allprojects {
-    apply plugin: 'org.jetbrains.kotlin.jvm'
+group 'gg.rsmod'
+version '0.5.7-SNAPSHOT'
 
-    group 'gg.rsmod.cache'
-    version '0.5.7-SNAPSHOT'
+repositories {
+    mavenCentral()
+    maven { url = 'https://dl.bintray.com/michaelbull/maven' }
+}
 
-    repositories {
-        mavenCentral()
-        maven { url = 'https://dl.bintray.com/michaelbull/maven' }
-    }
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    dependencies {
-        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile "org.apache.commons:commons-compress:$apacheCommonsVersion"
+    compile "com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion"
 
-        compile "org.apache.commons:commons-compress:$apacheCommonsVersion"
-        compile "com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+}
 
-        testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
-        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
-    }
-
-    compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }

@@ -10,17 +10,27 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 /**
+ * The different type of compression methods that can be used within the
+ * file system.
+ *
  * @author Tom
  */
 internal object Compression {
 
+    /**
+     * The data is not compressed.
+     */
     const val NONE = 0
 
+    /**
+     * The data is compressed with Bzip2 (https://en.wikipedia.org/wiki/Bzip2).
+     */
     const val BZIP2 = 1
 
+    /**
+     * The data is compressed with Gzip (https://en.wikipedia.org/wiki/Gzip).
+     */
     const val GZIP = 2
-
-    const val LZMA = 3
 }
 
 internal object BZip2 {

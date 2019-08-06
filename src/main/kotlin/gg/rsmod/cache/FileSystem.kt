@@ -172,10 +172,10 @@ open class FileSystem(
         val files: Array<ByteArray>
         if (fileCount == 1) {
             files = arrayOf(decompressedData)
-            archive.groupData[group] = files
+            archive.groupData[group.id] = files
         } else {
             files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
-            archive.groupData[group] = files
+            archive.groupData[group.id] = files
         }
         return Ok(files)
     }

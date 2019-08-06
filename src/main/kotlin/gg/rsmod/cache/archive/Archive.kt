@@ -4,11 +4,11 @@ package gg.rsmod.cache.archive
  * An archive contains [Group]s and their byte data.
  *
  * @param id the archive id.
- * @param groupData a map with [Group]s and their corresponding array of data
+ * @param groupData a map with group ids and their corresponding array of data
  * for each file inside of them.
  */
 data class Archive(
-    val id: Int, val groupData: MutableMap<Group, Array<ByteArray>>
+    val id: Int, val groupData: MutableMap<Int, Array<ByteArray>>
 )
 
 /**

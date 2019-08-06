@@ -492,4 +492,8 @@ internal object GroupFileCodec {
 
         return fileData
     }
+
+    fun encode(packet: WriteOnlyPacket) {
+        TODO()
+    }
 }
