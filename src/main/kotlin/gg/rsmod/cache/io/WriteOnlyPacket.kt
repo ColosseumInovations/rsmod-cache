@@ -41,6 +41,12 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
         get() = buffer.size - position
 
     /**
+     * Check if this packet has any more [writableBytes].
+     */
+    val isWritable: Boolean
+        get() = writableBytes > 0
+
+    /**
      * Reset the write position of this packet.
      */
     fun reset(): WriteOnlyPacket {
