@@ -47,7 +47,8 @@ internal object BZip2 {
                 IOUtils.copy(input, output)
             }
         }
-        return output.toByteArray()
+        val formatData = output.toByteArray()
+        return formatData.sliceArray(HEADER.size until formatData.size)
     }
 
     fun decompress(data: ByteArray, length: Int): Result<ByteArray, Exception> {
@@ -57,7 +58,7 @@ internal object BZip2 {
             System.arraycopy(data, 0, formatData, HEADER.size, length)
 
             val output = ByteArrayOutputStream()
-            BZip2CompressorInputStream(ByteArrayInputStream(data, 0, length)).use { input ->
+            BZip2CompressorInputStream(ByteArrayInputStream(formatData)).use { input ->
                 output.use { output ->
                     IOUtils.copy(input, output)
                 }
