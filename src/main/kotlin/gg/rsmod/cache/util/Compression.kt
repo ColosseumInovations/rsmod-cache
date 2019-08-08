@@ -6,6 +6,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.utils.IOUtils
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
@@ -35,17 +36,14 @@ internal object Compression {
 
 internal object BZip2 {
 
-    private val HEADER = ByteArray(4).apply {
-        this[0] = 'B'.toByte()
-        this[1] = 'Z'.toByte()
-        this[2] = 'h'.toByte()
-        this[3] = '1'.toByte()
-    }
+    private const val BLOCK_LENGTH = 1
+
+    private val HEADER = "BZh$BLOCK_LENGTH".toByteArray(StandardCharsets.US_ASCII)
 
     fun compress(data: ByteArray): ByteArray {
         val output = ByteArrayOutputStream()
         ByteArrayInputStream(data).use { input ->
-            BZip2CompressorOutputStream(output, 1).use { output ->
+            BZip2CompressorOutputStream(output, BLOCK_LENGTH).use { output ->
                 IOUtils.copy(input, output)
             }
         }
@@ -56,11 +54,10 @@ internal object BZip2 {
         return Result.of {
             val formatData = ByteArray(length + HEADER.size)
             System.arraycopy(HEADER, 0, formatData, 0, HEADER.size)
-
             System.arraycopy(data, 0, formatData, HEADER.size, length)
 
             val output = ByteArrayOutputStream()
-            BZip2CompressorInputStream(ByteArrayInputStream(formatData)).use { input ->
+            BZip2CompressorInputStream(ByteArrayInputStream(data, 0, length)).use { input ->
                 output.use { output ->
                     IOUtils.copy(input, output)
                 }
