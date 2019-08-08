@@ -1,6 +1,8 @@
 package gg.rsmod.cache.util
 
+import gg.rsmod.cache.io.ReadOnlyPacket
 import gg.rsmod.cache.io.ReadWritePacket
+import gg.rsmod.cache.io.WriteOnlyPacket
 
 /**
  * An implementation of the XTEA cipher (https://en.wikipedia.org/wiki/XTEA).
@@ -41,7 +43,7 @@ object Xtea {
      * Encipher the data inside [packet] in ranges from [start] to [end]
      * with the given [key].
      */
-    fun encipher(packet: ReadWritePacket, start: Int, end: Int, key: IntArray) {
+    fun encipher(packet: ReadOnlyPacket, start: Int, end: Int, key: IntArray): ByteArray {
         // The length of a single block, in bytes.
         val blockLength = Int.SIZE_BYTES * 2
 
@@ -50,8 +52,9 @@ object Xtea {
 
         // Start reading and writing to the packet from the given
         // start pos.
-        packet.setWriterPosition(start)
-        packet.setReaderPosition(start)
+        packet.position = start
+
+        val writer = WriteOnlyPacket(numBlocks * (Int.SIZE_BYTES + Int.SIZE_BYTES))
 
         for (i in 0 until numBlocks) {
             // Get the values from the current block in the data.
@@ -70,9 +73,11 @@ object Xtea {
             // the values in the starting pos of this block.
             // Our current implementation using the ReadWritePacket will handle
             // this for us.
-            packet.p4(v0)
-            packet.p4(v1)
+            writer.p4(v0)
+            writer.p4(v1)
         }
+
+        return writer.array
     }
 
     /**
@@ -86,8 +91,8 @@ object Xtea {
         // The total amount of blocks in our data.
         val numBlocks = (end - start) / blockLength
 
-        // Create a packet to read and write (replace) the data.
-        val packet = ReadWritePacket.of(data)
+        // Create a packet to read and write to a copy of the data.
+        val packet = ReadWritePacket.of(data.copyOf())
 
         // Start reading and writing to the packet from the given
         // start pos.
