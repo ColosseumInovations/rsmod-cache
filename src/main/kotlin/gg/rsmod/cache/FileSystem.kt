@@ -151,7 +151,7 @@ open class FileSystem(
                 CompressionCodec.decode(
                     ReadOnlyPacket.of(compressedData),
                     key,
-                    VALID_COMPRESSION_LENGTH,
+                    MAX_COMPRESSION_LENGTH,
                     CRC32()
                 )
             }.andThen { decompressedData -> putGroupData(archive, group, decompressedData) }
@@ -236,7 +236,7 @@ open class FileSystem(
         /**
          * The valid length, in bytes, that we allow for data decompression.
          */
-        internal val VALID_COMPRESSION_LENGTH = 0..1_000_000
+        internal const val MAX_COMPRESSION_LENGTH = 1_000_000
 
         /**
          * The default file names for index files in the file system

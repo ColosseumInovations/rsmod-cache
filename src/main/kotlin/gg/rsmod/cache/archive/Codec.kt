@@ -257,13 +257,13 @@ internal object CompressionCodec {
     fun decode(
         packet: ReadOnlyPacket,
         key: IntArray,
-        validCompressionLength: IntRange,
+        maxCompressedLength: Int,
         crc: CRC32
     ): Result<ByteArray, DomainMessage> {
         val compression = packet.g1
         val compressedLength = packet.g4
 
-        if (compressedLength !in validCompressionLength) {
+        if (compressedLength !in 0..maxCompressedLength) {
             return Err(CompressedLengthOutOfBounds)
         }
 
@@ -423,7 +423,7 @@ internal object MasterIndexCodec {
                 CompressionCodec.decode(
                     ReadOnlyPacket.of(dataBlock.data),
                     Xtea.EMPTY_KEY_SET,
-                    FileSystem.VALID_COMPRESSION_LENGTH,
+                    FileSystem.MAX_COMPRESSION_LENGTH,
                     crc
                 )
             }
