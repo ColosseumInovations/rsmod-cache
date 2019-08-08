@@ -2,7 +2,6 @@ package gg.rsmod.cache.archive
 
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
-import gg.rsmod.cache.domain.PacketNotEnoughData
 import gg.rsmod.cache.domain.PacketOverflow
 import gg.rsmod.cache.io.ReadOnlyPacket
 import gg.rsmod.cache.io.WriteOnlyPacket
@@ -25,26 +24,11 @@ class DataBlockPointerTests {
     }
 
     @Test
-    fun `decode packet to underflow`() {
-        val packet = ReadOnlyPacket(PACKET_SIZE - 1)
-        assertEquals(PacketNotEnoughData, DataBlockPointerCodec.decode(packet).getError())
-        assertEquals(0, packet.position)
-    }
-
-    @Test
     fun `encode packet`() {
         val packet = WriteOnlyPacket(PACKET_SIZE)
         val value = FileSystemDataBlockPointer(offset = 0, length = 0)
         assertNull(DataBlockPointerCodec.encode(value, packet).getError())
         assertEquals(PACKET_SIZE, packet.position)
-    }
-
-    @Test
-    fun `encode packet to overflow`() {
-        val packet = WriteOnlyPacket(PACKET_SIZE - 1)
-        val value = FileSystemDataBlockPointer(offset = 0, length = 0)
-        assertEquals(PacketOverflow, DataBlockPointerCodec.encode(value, packet).getError())
-        assertEquals(0, packet.position)
     }
 
     @Test
