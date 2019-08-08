@@ -31,6 +31,7 @@ object Xtea {
 
     /**
      * Fully decipher the [data] using [key].
+     * This function will directly affect [data].
      */
     fun decipher(data: ByteArray, key: IntArray): ByteArray {
         if (key.contentEquals(EMPTY_KEY_SET)) {
@@ -42,6 +43,8 @@ object Xtea {
     /**
      * Encipher the data inside [packet] in ranges from [start] to [end]
      * with the given [key].
+     *
+     * This function will directly affect [data].
      */
     fun encipher(data: ByteArray, start: Int, end: Int, key: IntArray): ByteArray {
         // The length of a single block, in bytes.
@@ -82,6 +85,8 @@ object Xtea {
     /**
      * Decipher the byte data inside [data] in ranges from [start] to [end]
      * with the given [key].
+     *
+     * This function will directly affect [data].
      */
     fun decipher(data: ByteArray, start: Int, end: Int, key: IntArray): ByteArray {
         // The length of a single block, in bytes.
