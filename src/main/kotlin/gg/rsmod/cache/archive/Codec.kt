@@ -23,7 +23,6 @@ import gg.rsmod.cache.domain.PacketNotEnoughData
 import gg.rsmod.cache.domain.PacketOverflow
 import gg.rsmod.cache.io.FileSystemFile
 import gg.rsmod.cache.io.ReadOnlyPacket
-import gg.rsmod.cache.io.ReadWritePacket
 import gg.rsmod.cache.io.WriteOnlyPacket
 import gg.rsmod.cache.util.BZip2
 import gg.rsmod.cache.util.Compression
@@ -291,8 +290,8 @@ internal object CompressionCodec {
         compression: Int,
         version: Int?,
         keys: IntArray,
-        packet: ReadWritePacket
-    ): Result<ReadWritePacket, DomainMessage> {
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> {
         val compressed = when (compression) {
             Compression.NONE -> data
             Compression.GZIP -> GZip.compress(data)
@@ -309,7 +308,8 @@ internal object CompressionCodec {
         }
 
         if (!keys.contentEquals(Xtea.EMPTY_KEY_SET)) {
-            Xtea.encipher(packet, 5, compressed.size + (if (compression == Compression.NONE) 5 else 9), keys)
+            val enciphered = Xtea.encipher(ReadOnlyPacket.of(data), 5, compressed.size + (if (compression == Compression.NONE) 5 else 9), keys)
+            packet.pdata(enciphered)
         }
         return Ok(packet)
     }
