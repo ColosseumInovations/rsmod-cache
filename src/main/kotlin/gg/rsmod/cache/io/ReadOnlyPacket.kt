@@ -34,6 +34,12 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         get() = buffer
 
     /**
+     * The capacity of this packet.
+     */
+    val capacity: Int
+        get() = array.size
+
+    /**
      * The amount of bytes that can be read from this packet taking the
      * current [position] into account.
      */
