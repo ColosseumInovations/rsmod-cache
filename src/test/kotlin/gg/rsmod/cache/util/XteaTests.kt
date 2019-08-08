@@ -1,6 +1,5 @@
 package gg.rsmod.cache.util
 
-import gg.rsmod.cache.io.ReadOnlyPacket
 import gg.rsmod.cache.io.WriteOnlyPacket
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -16,8 +15,7 @@ class XteaTests {
         }
 
         val data = dataWriter.array
-        val packet = ReadOnlyPacket.of(data)
-        val enciphered = Xtea.encipher(packet, 0, data.size, key)
+        val enciphered = Xtea.encipher(data, 0, data.size, key)
 
         val decipherIncorrectKey = Xtea.decipher(enciphered, intArrayOf(1, 2, 4, 3))
         assert(!decipherIncorrectKey.contentEquals(data))
