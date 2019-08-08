@@ -74,8 +74,8 @@ internal object DataBlockPointerCodec {
             }
 
     fun encode(
-        pointer: FileSystemDataBlockPointer,
-        packet: WriteOnlyPacket
+        packet: WriteOnlyPacket,
+        pointer: FileSystemDataBlockPointer
     ): Result<WriteOnlyPacket, DomainMessage> =
         packet.verifyWritable(MEDIUM_SIZE_BYTES + MEDIUM_SIZE_BYTES)
             .andThen {
@@ -105,8 +105,8 @@ internal object DataBlockCodec {
             }
 
     fun encode(
-        dataBlock: FileSystemDataBlock,
-        packet: WriteOnlyPacket
+        packet: WriteOnlyPacket,
+        dataBlock: FileSystemDataBlock
     ): Result<WriteOnlyPacket, DomainMessage> =
         packet.verifyWritable(Short.SIZE_BYTES + Short.SIZE_BYTES + MEDIUM_SIZE_BYTES + Byte.SIZE_BYTES)
             .andThen {
@@ -135,8 +135,8 @@ internal object DataBlockCodec {
             }
 
     fun encodeExtended(
-        dataBlock: FileSystemDataBlock,
-        packet: WriteOnlyPacket
+        packet: WriteOnlyPacket,
+        dataBlock: FileSystemDataBlock
     ): Result<WriteOnlyPacket, DomainMessage> =
         packet.verifyWritable(Int.SIZE_BYTES + Short.SIZE_BYTES + MEDIUM_SIZE_BYTES + Byte.SIZE_BYTES)
             .andThen {
@@ -164,7 +164,7 @@ internal object DataCodec {
         val data = ByteArray(totalLength)
 
         var totalBytesRead = 0
-        var currBlock = 0
+        var currBlockIndex = 0
         var nextBlock = offset
 
         while (totalBytesRead < totalLength) {
@@ -199,7 +199,7 @@ internal object DataCodec {
                 return Err(DataGroupMismatch)
             }
 
-            if (block.currBlockIndex != currBlock) {
+            if (block.currBlockIndex != currBlockIndex) {
                 return Err(DataBlockMismatch)
             }
 
@@ -207,16 +207,47 @@ internal object DataCodec {
 
             nextBlock = block.nextBlock
             totalBytesRead += payloadLength
-            currBlock++
+            currBlockIndex++
         }
 
         return Ok(FileSystemData(archive, group, data))
     }
 
     fun encode(
-        packet: WriteOnlyPacket
+        packet: WriteOnlyPacket,
+        data: FileSystemData,
+        extended: Boolean,
+        headerLength: Int,
+        blockLength: Int,
+        totalLength: Int
     ): Result<WriteOnlyPacket, DomainMessage> =
-        TODO()
+        packet.verifyWritable(totalLength)
+            .andThen {
+                var totalBytesWritten = 0
+                var currBlockIndex = 0
+
+                while (totalBytesWritten < totalLength) {
+                    val payloadLength = min(blockLength - headerLength, totalLength - totalBytesWritten)
+
+                    val nextBlockIndex = currBlockIndex + 1
+                    val block = FileSystemDataBlock(data.archive, data.group, currBlockIndex, nextBlockIndex)
+
+                    val blockResult = if (extended) {
+                        DataBlockCodec.encodeExtended(packet, block)
+                    } else {
+                        DataBlockCodec.encode(packet, block)
+                    }
+
+                    val blockErr = blockResult.getError()
+                    if (blockErr != null) {
+                        return Err(blockErr)
+                    }
+
+                    totalBytesWritten += payloadLength
+                    currBlockIndex = nextBlockIndex
+                }
+                Ok(packet)
+            }
 }
 
 internal object CompressionCodec {
@@ -286,11 +317,11 @@ internal object CompressionCodec {
     }
 
     fun encode(
+        packet: WriteOnlyPacket,
         data: ByteArray,
         compression: Int,
         version: Int?,
-        keys: IntArray,
-        packet: WriteOnlyPacket
+        keys: IntArray
     ): Result<WriteOnlyPacket, DomainMessage> {
         val compressed = when (compression) {
             Compression.NONE -> data
@@ -387,8 +418,8 @@ internal object MasterIndexCodec {
     }
 
     fun encode(
-        indexes: Map<Int, Index>,
-        packet: WriteOnlyPacket
+        packet: WriteOnlyPacket,
+        indexes: Map<Int, Index>
     ): Result<WriteOnlyPacket, DomainMessage> =
         TODO()
 }
@@ -494,8 +525,8 @@ internal object IndexCodec {
     }
 
     fun encode(
-        index: Index,
-        packet: WriteOnlyPacket
+        packet: WriteOnlyPacket,
+        index: Index
     ): Result<WriteOnlyPacket, DomainMessage> =
         TODO()
 

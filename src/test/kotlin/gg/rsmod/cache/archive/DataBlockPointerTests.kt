@@ -27,7 +27,7 @@ class DataBlockPointerTests {
     fun `encode packet`() {
         val packet = WriteOnlyPacket(PACKET_SIZE)
         val value = FileSystemDataBlockPointer(offset = 0, length = 0)
-        assertNull(DataBlockPointerCodec.encode(value, packet).getError())
+        assertNull(DataBlockPointerCodec.encode(packet, value).getError())
         assertEquals(PACKET_SIZE, packet.position)
     }
 
@@ -36,7 +36,7 @@ class DataBlockPointerTests {
         val writer = WriteOnlyPacket(PACKET_SIZE)
         val value = FileSystemDataBlockPointer(offset = 8, length = 8)
 
-        assertNotEquals(PacketOverflow, DataBlockPointerCodec.encode(value, writer).getError())
+        assertNotEquals(PacketOverflow, DataBlockPointerCodec.encode(writer, value).getError())
 
         val reader = ReadOnlyPacket.of(writer.array)
         val decoded = DataBlockPointerCodec.decode(reader)

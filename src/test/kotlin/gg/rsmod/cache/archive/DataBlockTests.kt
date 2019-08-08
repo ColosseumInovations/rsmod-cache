@@ -25,7 +25,7 @@ class DataBlockTests {
     fun `encode packet`() {
         val packet = WriteOnlyPacket(PACKET_SIZE)
         val value = FileSystemDataBlock(archive = 0, group = 0, currBlockIndex = 0, nextBlock = 0)
-        assertNull(DataBlockCodec.encode(value, packet).getError())
+        assertNull(DataBlockCodec.encode(packet, value).getError())
         assertEquals(PACKET_SIZE, packet.position)
     }
 
@@ -34,7 +34,7 @@ class DataBlockTests {
         val writer = WriteOnlyPacket(PACKET_SIZE)
         val value = FileSystemDataBlock(archive = 8, group = 8, currBlockIndex = 0, nextBlock = 1)
 
-        assertNull(DataBlockCodec.encode(value, writer).getError())
+        assertNull(DataBlockCodec.encode(writer, value).getError())
 
         val reader = ReadOnlyPacket.of(writer.array)
         val decoded = DataBlockCodec.decode(reader)
@@ -56,7 +56,7 @@ class DataBlockTests {
     fun `encode extended packet`() {
         val packet = WriteOnlyPacket(PACKET_SIZE_EXTENDED)
         val value = FileSystemDataBlock(archive = 0, group = 0, currBlockIndex = 0, nextBlock = 0)
-        assertNull(DataBlockCodec.encodeExtended(value, packet).getError())
+        assertNull(DataBlockCodec.encodeExtended(packet, value).getError())
         assertEquals(PACKET_SIZE_EXTENDED, packet.position)
     }
 
@@ -65,7 +65,7 @@ class DataBlockTests {
         val writer = WriteOnlyPacket(PACKET_SIZE_EXTENDED)
         val value = FileSystemDataBlock(archive = 8, group = 8, currBlockIndex = 0, nextBlock = 1)
 
-        assertNull(DataBlockCodec.encodeExtended(value, writer).getError())
+        assertNull(DataBlockCodec.encodeExtended(writer, value).getError())
 
         val reader = ReadOnlyPacket.of(writer.array)
         val decoded = DataBlockCodec.decodeExtended(reader)
