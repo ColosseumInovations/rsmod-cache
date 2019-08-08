@@ -1,6 +1,7 @@
 package gg.rsmod.cache.util
 
 import gg.rsmod.cache.io.WriteOnlyPacket
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
@@ -12,7 +13,7 @@ class XteaTests {
         val enciphered = Xtea.encipher(data, 0, data.size, key)
 
         val decipherIncorrectKey = Xtea.decipher(enciphered.copyOf(), intArrayOf(1, 2, 4, 3))
-        assert(!decipherIncorrectKey.contentEquals(data))
+        assertFalse(decipherIncorrectKey.contentEquals(data))
 
         val decipherCorrectKey = Xtea.decipher(enciphered.copyOf(), key)
         assert(decipherCorrectKey.contentEquals(data))
