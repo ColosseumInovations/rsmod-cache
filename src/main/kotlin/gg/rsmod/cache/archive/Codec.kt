@@ -386,9 +386,11 @@ internal object MasterIndexCodec {
             }
     }
 
-    fun encode(packet: WriteOnlyPacket) {
+    fun encode(
+        indexes: Map<Int, Index>,
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
         TODO()
-    }
 }
 
 internal object IndexCodec {
@@ -491,9 +493,11 @@ internal object IndexCodec {
         return Index(format, flags, groups)
     }
 
-    fun encode(packet: WriteOnlyPacket) {
+    fun encode(
+        index: Index,
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
         TODO()
-    }
 
     private fun ReadOnlyPacket.gSmartOr2(format: Int): Int = if (format == Format.SMART) {
         gSmart2Or4
@@ -538,9 +542,10 @@ internal object GroupCodec {
             }
     }
 
-    fun encode(packet: WriteOnlyPacket) {
+    fun encode(
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
         TODO()
-    }
 }
 
 internal object GroupFileCodec {
@@ -587,7 +592,8 @@ internal object GroupFileCodec {
         return fileData
     }
 
-    fun encode(packet: WriteOnlyPacket) {
+    fun encode(
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
         TODO()
-    }
 }
