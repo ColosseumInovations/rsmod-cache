@@ -300,8 +300,8 @@ internal object CompressionCodec {
 
         // TODO: better way to handle exception result from decompress
         val decompressResult = when (compression) {
-            Compression.GZIP -> GZip.decompress(decompressedContent, compressedLength)
             Compression.BZIP2 -> BZip2.decompress(decompressedContent, compressedLength)
+            Compression.GZIP -> GZip.decompress(decompressedContent, compressedLength)
             else -> return Err(IllegalCompressionType)
         }
 
@@ -374,7 +374,7 @@ internal object MasterIndexCodec {
         val indexBuf = ByteArray(indexLength)
         val dataBuf = ByteArray(dataLength)
 
-        indexFiles.forEach { indexFile ->
+        indexFiles.sortedBy { it }.forEach { indexFile ->
             masterIndexFile.seek(indexFile.toLong() * indexLength)
             masterIndexFile.read(indexBuf, 0, indexLength)
 
@@ -442,7 +442,7 @@ internal object IndexCodec {
         val formatType = packet.g1
         val format = when (formatType) {
             Format.NONE -> 0
-            Format.SHORT -> packet.g2
+            Format.SHORT -> packet.g4
             else -> packet.g4
         }
 
