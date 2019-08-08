@@ -26,8 +26,7 @@ dependencies {
     compile "org.apache.commons:commons-compress:$apacheCommonsVersion"
     compile "com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion"
 
-    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
 }
 
 compileKotlin {
