@@ -95,7 +95,7 @@ object CompressedLengthOutOfBounds
  * The input streams threw an exception when trying to decompress data.
  */
 object DecompressionError
-    : DomainMessage("There was an exception when decompressing the data")
+    : DomainMessage("There was an exception when decompressing the data (most likely incorrect XTEA key).")
 
 /**
  * The given compression type is invalid.
