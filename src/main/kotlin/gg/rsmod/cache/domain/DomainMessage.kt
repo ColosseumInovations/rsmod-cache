@@ -92,6 +92,12 @@ object CompressedLengthOutOfBounds
     : DomainMessage("Packed compression length is out of bounds")
 
 /**
+ * The input streams threw an exception when trying to decompress data.
+ */
+object DecompressionError
+    : DomainMessage("There was an exception when decompressing the data")
+
+/**
  * The given compression type is invalid.
  */
 object IllegalCompressionType : DomainMessage("Packed compression type is invalid")

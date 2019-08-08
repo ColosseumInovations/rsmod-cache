@@ -15,6 +15,7 @@ import gg.rsmod.cache.domain.DataBlockPointerInvalidLength
 import gg.rsmod.cache.domain.DataBlockPointerInvalidOffset
 import gg.rsmod.cache.domain.DataBlockReadMalformation
 import gg.rsmod.cache.domain.DataGroupMismatch
+import gg.rsmod.cache.domain.DecompressionError
 import gg.rsmod.cache.domain.DomainMessage
 import gg.rsmod.cache.domain.IllegalCompressionType
 import gg.rsmod.cache.domain.IllegalVersion
@@ -306,7 +307,7 @@ internal object CompressionCodec {
 
         val err = decompressResult.getError()
         if (err != null) {
-            return Err(IllegalCompressionType)
+            return Err(DecompressionError)
         }
 
         val decompressedData = decompressResult.get()!!
