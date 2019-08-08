@@ -137,26 +137,26 @@ class CompressionTests {
         assertEquals(DecompressionError, decompressed.getError())
     }
 
-    private fun compress(data: ByteArray, key: IntArray, compression: Int): Result<ByteArray, DomainMessage> =
-        CompressionCodec.encode(
-            data,
-            compression,
-            null,
-            key
-        )
-
-    private fun decompress(data: ByteArray, key: IntArray): Result<ByteArray, DomainMessage> =
-        CompressionCodec.decode(
-            ReadOnlyPacket.of(data),
-            key,
-            1_000_000,
-            CRC32()
-        )
-
     companion object {
         private val data = byteArrayOf(
             0, 8, 16, 24, 32, 40, 48, 56, 64,
             72, 80, 88, 96, 104, 112, 120
         )
+
+        private fun compress(data: ByteArray, key: IntArray, compression: Int): Result<ByteArray, DomainMessage> =
+            CompressionCodec.encode(
+                data,
+                compression,
+                null,
+                key
+            )
+
+        private fun decompress(data: ByteArray, key: IntArray): Result<ByteArray, DomainMessage> =
+            CompressionCodec.decode(
+                ReadOnlyPacket.of(data),
+                key,
+                1_000_000,
+                CRC32()
+            )
     }
 }
