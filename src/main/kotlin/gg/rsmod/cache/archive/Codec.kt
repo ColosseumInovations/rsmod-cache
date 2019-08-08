@@ -330,6 +330,7 @@ internal object CompressionCodec {
             Compression.BZIP2 -> BZip2.compress(data)
             else -> return Err(IllegalCompressionType)
         }
+        // TODO: remove magic numbers
         val header = 5 + (if (compression != Compression.NONE) 4 else 0) + (if (version != null) 2 else 0)
         val packet = WriteOnlyPacket(header + compressed.size)
 
