@@ -43,23 +43,22 @@ object Xtea {
      * Encipher the data inside [packet] in ranges from [start] to [end]
      * with the given [key].
      */
-    fun encipher(packet: ReadOnlyPacket, start: Int, end: Int, key: IntArray): ByteArray {
+    fun encipher(data: ByteArray, start: Int, end: Int, key: IntArray): ByteArray {
         // The length of a single block, in bytes.
         val blockLength = Int.SIZE_BYTES * 2
 
         // The total amount of blocks in our data.
         val numBlocks = (end - start) / blockLength
 
-        // Start reading and writing to the packet from the given
-        // start pos.
-        packet.position = start
-
         val writer = WriteOnlyPacket(numBlocks * (Int.SIZE_BYTES + Int.SIZE_BYTES))
+
+        val reader = ReadOnlyPacket.of(data)
+        reader.position = start
 
         for (i in 0 until numBlocks) {
             // Get the values from the current block in the data.
-            var v0 = packet.g4
-            var v1 = packet.g4
+            var v0 = reader.g4
+            var v1 = reader.g4
 
             // Encipher the values using the given keys.
             var sum = 0
@@ -92,7 +91,7 @@ object Xtea {
         val numBlocks = (end - start) / blockLength
 
         // Create a packet to read and write to a copy of the data.
-        val packet = ReadWritePacket.of(data.copyOf())
+        val packet = ReadWritePacket.of(data)
 
         // Start reading and writing to the packet from the given
         // start pos.

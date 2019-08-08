@@ -216,6 +216,7 @@ internal object DataCodec {
     fun encode(
         packet: WriteOnlyPacket,
         data: FileSystemData,
+        blockIndex: Int,
         extended: Boolean,
         headerLength: Int,
         blockLength: Int,
@@ -224,7 +225,7 @@ internal object DataCodec {
         packet.verifyWritable(totalLength)
             .andThen {
                 var totalBytesWritten = 0
-                var currBlockIndex = 0
+                var currBlockIndex = blockIndex
 
                 while (totalBytesWritten < totalLength) {
                     val payloadLength = min(blockLength - headerLength, totalLength - totalBytesWritten)
@@ -254,7 +255,7 @@ internal object CompressionCodec {
 
     fun decode(
         packet: ReadOnlyPacket,
-        keys: IntArray,
+        key: IntArray,
         validCompressionLength: IntRange,
         crc: CRC32
     ): Result<ByteArray, DomainMessage> {
@@ -271,8 +272,8 @@ internal object CompressionCodec {
         packet.gdata(encryptedData)
         crc.update(encryptedData)
 
-        val decryptedData = if (keys.contentEquals(Xtea.EMPTY_KEY_SET)) {
-            Xtea.decipher(encryptedData, keys)
+        val decryptedData = if (!key.contentEquals(Xtea.EMPTY_KEY_SET)) {
+            Xtea.decipher(encryptedData, key)
         } else {
             encryptedData
         }
@@ -317,32 +318,42 @@ internal object CompressionCodec {
     }
 
     fun encode(
-        packet: WriteOnlyPacket,
         data: ByteArray,
         compression: Int,
         version: Int?,
-        keys: IntArray
-    ): Result<WriteOnlyPacket, DomainMessage> {
+        key: IntArray
+    ): Result<ByteArray, DomainMessage> {
         val compressed = when (compression) {
             Compression.NONE -> data
             Compression.GZIP -> GZip.compress(data)
             Compression.BZIP2 -> BZip2.compress(data)
             else -> return Err(IllegalCompressionType)
         }
+        val header = 5 + (if (compression != Compression.NONE) 4 else 0) + (if (version != null) 2 else 0)
+        val packet = WriteOnlyPacket(header + compressed.size)
 
         packet.p1(compression)
         packet.p4(compressed.size)
+        if (compression != Compression.NONE) {
+            packet.p4(data.size)
+        }
         packet.pdata(compressed)
 
         if (version != null) {
             packet.p2(version)
         }
 
-        if (!keys.contentEquals(Xtea.EMPTY_KEY_SET)) {
-            val enciphered = Xtea.encipher(ReadOnlyPacket.of(data), 5, compressed.size + (if (compression == Compression.NONE) 5 else 9), keys)
+        if (!key.contentEquals(Xtea.EMPTY_KEY_SET)) {
+            val enciphered = Xtea.encipher(
+                packet.array,
+                5,
+                compressed.size + (if (compression == Compression.NONE) 5 else 9),
+                key
+            )
+            packet.position = 5
             packet.pdata(enciphered)
         }
-        return Ok(packet)
+        return Ok(packet.array)
     }
 }
 
