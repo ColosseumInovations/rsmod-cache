@@ -5,6 +5,20 @@ sealed class DomainMessage(private val reason: String) {
 }
 
 /**
+ * The packet can't store any more data due to the capacity it was constructed
+ * with.
+ */
+object PacketOverflow
+    : DomainMessage("The packet cannot store any more data due to its initial capacity")
+
+/**
+ * The packet can't read any more data due to the capacity it was constructed
+ * with.
+ */
+object PacketNotEnoughData
+    : DomainMessage("The packet does not have any more data to read")
+
+/**
  * The directory for the [gg.rsmod.cache.FileSystem] was not set.
  */
 object FileSystemDirectoryNotSet : DomainMessage("File system directory was not set")

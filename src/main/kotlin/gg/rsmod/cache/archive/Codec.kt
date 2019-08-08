@@ -19,6 +19,8 @@ import gg.rsmod.cache.domain.DomainMessage
 import gg.rsmod.cache.domain.IllegalCompressionType
 import gg.rsmod.cache.domain.IllegalVersion
 import gg.rsmod.cache.domain.MalformedIndexRead
+import gg.rsmod.cache.domain.PacketNotEnoughData
+import gg.rsmod.cache.domain.PacketOverflow
 import gg.rsmod.cache.io.FileSystemFile
 import gg.rsmod.cache.io.ReadOnlyPacket
 import gg.rsmod.cache.io.ReadWritePacket
@@ -35,60 +37,116 @@ import java.util.zip.CRC32
 import kotlin.collections.set
 import kotlin.math.min
 
+private const val MEDIUM_SIZE_BYTES = 3
+
+private fun ReadOnlyPacket.verifyReadable(length: Int): Result<ReadOnlyPacket, DomainMessage> =
+    if (readableBytes >= length) {
+        Ok(this)
+    } else {
+        Err(PacketNotEnoughData)
+    }
+
+private fun WriteOnlyPacket.verifyWritable(length: Int): Result<WriteOnlyPacket, DomainMessage> =
+    if (writableBytes >= length) {
+        Ok(this)
+    } else {
+        Err(PacketOverflow)
+    }
+
 internal object DataBlockPointerCodec {
 
-    fun decode(packet: ReadOnlyPacket): Result<FileSystemDataBlockPointer, DomainMessage> {
-        val length = packet.g3
-        val offset = packet.g3
+    fun decode(
+        packet: ReadOnlyPacket
+    ): Result<FileSystemDataBlockPointer, DomainMessage> =
+        packet.verifyReadable(MEDIUM_SIZE_BYTES + MEDIUM_SIZE_BYTES)
+            .andThen {
+                val length = packet.g3
+                val offset = packet.g3
 
-        if (length <= 0) {
-            return Err(DataBlockPointerInvalidLength)
-        }
+                if (length <= 0) {
+                    return Err(DataBlockPointerInvalidLength)
+                }
 
-        if (offset <= 0) {
-            return Err(DataBlockPointerInvalidOffset)
-        }
+                if (offset <= 0) {
+                    return Err(DataBlockPointerInvalidOffset)
+                }
 
-        return Ok(FileSystemDataBlockPointer(offset, length))
-    }
+                return Ok(FileSystemDataBlockPointer(offset, length))
+            }
 
-    fun encode(pointer: FileSystemDataBlockPointer, packet: WriteOnlyPacket) {
-        packet.p3(pointer.length)
-        packet.p3(pointer.offset)
-    }
+    fun encode(
+        pointer: FileSystemDataBlockPointer,
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
+        packet.verifyWritable(MEDIUM_SIZE_BYTES + MEDIUM_SIZE_BYTES)
+            .andThen {
+                packet.p3(pointer.length)
+                packet.p3(pointer.offset)
+                Ok(packet)
+            }
 }
 
 internal object DataBlockCodec {
 
-    fun decode(packet: ReadOnlyPacket): FileSystemDataBlock {
-        val group = packet.g2
-        val currBlock = packet.g2
-        val nextBlock = packet.g3
-        val archive = packet.g1
-        return FileSystemDataBlock(archive = archive, group = group, currBlockIndex = currBlock, nextBlock = nextBlock)
-    }
+    fun decode(
+        packet: ReadOnlyPacket
+    ): Result<FileSystemDataBlock, DomainMessage> =
+        packet.verifyReadable(Short.SIZE_BYTES + Short.SIZE_BYTES + MEDIUM_SIZE_BYTES + Byte.SIZE_BYTES)
+            .andThen {
+                val group = packet.g2
+                val currBlock = packet.g2
+                val nextBlock = packet.g3
+                val archive = packet.g1
+                return Ok(FileSystemDataBlock(
+                    archive = archive,
+                    group = group,
+                    currBlockIndex = currBlock,
+                    nextBlock = nextBlock
+                ))
+            }
 
-    fun encode(dataBlock: FileSystemDataBlock, packet: WriteOnlyPacket) {
-        packet.p2(dataBlock.group)
-        packet.p2(dataBlock.currBlockIndex)
-        packet.p3(dataBlock.nextBlock)
-        packet.p1(dataBlock.archive)
-    }
+    fun encode(
+        dataBlock: FileSystemDataBlock,
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
+        packet.verifyWritable(Short.SIZE_BYTES + Short.SIZE_BYTES + MEDIUM_SIZE_BYTES + Byte.SIZE_BYTES)
+            .andThen {
+                packet.p2(dataBlock.group)
+                packet.p2(dataBlock.currBlockIndex)
+                packet.p3(dataBlock.nextBlock)
+                packet.p1(dataBlock.archive)
+                Ok(packet)
+            }
 
-    fun decodeExtended(packet: ReadOnlyPacket): FileSystemDataBlock {
-        val group = packet.g4
-        val currBlock = packet.g2
-        val nextBlock = packet.g3
-        val archive = packet.g1
-        return FileSystemDataBlock(archive = archive, group = group, currBlockIndex = currBlock, nextBlock = nextBlock)
-    }
+    fun decodeExtended(
+        packet: ReadOnlyPacket
+    ): Result<FileSystemDataBlock, DomainMessage> =
+        packet.verifyReadable(Int.SIZE_BYTES + Short.SIZE_BYTES + MEDIUM_SIZE_BYTES + Byte.SIZE_BYTES)
+            .andThen {
+                val group = packet.g4
+                val currBlock = packet.g2
+                val nextBlock = packet.g3
+                val archive = packet.g1
+                return Ok(FileSystemDataBlock(
+                    archive = archive,
+                    group = group,
+                    currBlockIndex = currBlock,
+                    nextBlock = nextBlock
+                ))
+            }
 
-    fun encodeExtended(dataBlock: FileSystemDataBlock, packet: WriteOnlyPacket) {
-        packet.p4(dataBlock.group)
-        packet.p2(dataBlock.currBlockIndex)
-        packet.p3(dataBlock.nextBlock)
-        packet.p1(dataBlock.archive)
-    }
+    fun encodeExtended(
+        dataBlock: FileSystemDataBlock,
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
+        packet.verifyWritable(Int.SIZE_BYTES + Short.SIZE_BYTES + MEDIUM_SIZE_BYTES + Byte.SIZE_BYTES)
+            .andThen {
+                packet.p4(dataBlock.group)
+                packet.p2(dataBlock.currBlockIndex)
+                packet.p3(dataBlock.nextBlock)
+                packet.p1(dataBlock.archive)
+                Ok(packet)
+            }
 }
 
 internal object DataCodec {
@@ -121,11 +179,18 @@ internal object DataCodec {
                 return Err(DataBlockReadMalformation)
             }
 
-            val block = if (extended) {
+            val blockResult = if (extended) {
                 DataBlockCodec.decodeExtended(ReadOnlyPacket.of(tmpDataBuf))
             } else {
                 DataBlockCodec.decode(ReadOnlyPacket.of(tmpDataBuf))
             }
+
+            val blockErr = blockResult.getError()
+            if (blockErr != null) {
+                return Err(blockErr)
+            }
+
+            val block = blockResult.get()!!
 
             if (block.archive != archive) {
                 return Err(DataArchiveMismatch)
@@ -148,6 +213,11 @@ internal object DataCodec {
 
         return Ok(FileSystemData(archive, group, data))
     }
+
+    fun encode(
+        packet: WriteOnlyPacket
+    ): Result<WriteOnlyPacket, DomainMessage> =
+        TODO()
 }
 
 internal object CompressionCodec {
@@ -222,7 +292,7 @@ internal object CompressionCodec {
         version: Int?,
         keys: IntArray,
         packet: ReadWritePacket
-    ): Result<Unit, DomainMessage> {
+    ): Result<ReadWritePacket, DomainMessage> {
         val compressed = when (compression) {
             Compression.NONE -> data
             Compression.GZIP -> GZip.compress(data)
@@ -241,7 +311,7 @@ internal object CompressionCodec {
         if (!keys.contentEquals(Xtea.EMPTY_KEY_SET)) {
             Xtea.encipher(packet, 5, compressed.size + (if (compression == Compression.NONE) 5 else 9), keys)
         }
-        return Ok(Unit)
+        return Ok(packet)
     }
 }
 
@@ -289,10 +359,6 @@ internal object MasterIndexCodec {
         return Ok(indexes)
     }
 
-    fun encode(packet: WriteOnlyPacket) {
-        TODO()
-    }
-
     private fun decodeIndex(
         indexFile: Int,
         masterIndex: Int,
@@ -318,6 +384,10 @@ internal object MasterIndexCodec {
                     crc
                 )
             }
+    }
+
+    fun encode(packet: WriteOnlyPacket) {
+        TODO()
     }
 }
 

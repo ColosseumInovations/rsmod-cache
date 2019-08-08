@@ -11,12 +11,12 @@ class ReadWritePacket(buffer: ByteArray) {
     /**
      * The [WriteOnlyPacket] used to write to this packet.
      */
-    private val writer = WriteOnlyPacket(buffer)
+    val writer = WriteOnlyPacket(buffer)
 
     /**
      * The [ReadOnlyPacket] used to read from this packet.
      */
-    private val reader = ReadOnlyPacket(buffer)
+    val reader = ReadOnlyPacket(buffer)
 
     /**
      * Create a [ReadWritePacket] with a backing-array the size of [capacity].
@@ -30,22 +30,10 @@ class ReadWritePacket(buffer: ByteArray) {
         get() = writer.array
 
     /**
-     * Alias for this packet's writer [WriteOnlyPacket.position].
-     */
-    val writerPosition: Int
-        get() = writer.position
-
-    /**
      * Alias for this packet's reader [ReadOnlyPacket.array].
      */
     val readerArray: ByteArray
         get() = writer.array
-
-    /**
-     * Alias for this packet's reader [ReadOnlyPacket.position].
-     */
-    val readerPosition: Int
-        get() = reader.position
 
     /**
      * Reset the position for both the reader and writer packet.
