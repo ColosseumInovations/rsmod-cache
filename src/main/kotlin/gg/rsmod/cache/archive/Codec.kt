@@ -35,6 +35,7 @@ import gg.rsmod.cache.util.GZip
 import gg.rsmod.cache.util.Xtea
 import java.util.zip.CRC32
 import kotlin.collections.set
+import kotlin.math.abs
 import kotlin.math.min
 
 private const val MEDIUM_SIZE_BYTES = 3
@@ -443,7 +444,6 @@ internal object IndexCodec {
         val formatType = packet.g1
         val format = when (formatType) {
             Format.NONE -> 0
-            Format.SHORT -> packet.g4
             else -> packet.g4
         }
 
@@ -534,19 +534,83 @@ internal object IndexCodec {
             groups[group.id] = group
         }
 
-        return Index(format, flags, groups)
+        return Index(formatType, format, flags, groups)
     }
 
     fun encode(
         packet: WriteOnlyPacket,
         index: Index
     ): Result<WriteOnlyPacket, DomainMessage> =
-        TODO()
+        packet.verifyWritable(1024)
+            .andThen {
+                packet.p1(index.formatType)
+                if (index.formatType != Format.NONE) {
+                    packet.p4(index.format)
+                }
+
+                val groups = index.groups.values
+                packet.p1(index.flags)
+                packet.pSmartOr2(index.format, index.groups.size)
+
+                var lastGroupId = 0
+                groups.forEach { group ->
+                    val delta = abs(lastGroupId - group.id)
+                    packet.pSmartOr2(index.format, delta)
+                    lastGroupId = group.id
+                }
+
+                if (index.hasHashedNames) {
+                    groups.forEach { group ->
+                        packet.p4((group as NamedGroup).name)
+                    }
+                }
+
+                groups.forEach { group ->
+                    packet.p4(group.crc)
+                }
+
+                groups.forEach { group ->
+                    packet.p4(group.version)
+                }
+
+                groups.forEach { group ->
+                    val fileCount = group.files.size
+                    packet.pSmartOr2(index.format, fileCount)
+                }
+
+                groups.forEach { group ->
+                    var lastFileId = 0
+
+                    group.files.forEach { file ->
+                        val delta = abs(lastFileId - file.id)
+                        packet.pSmartOr2(index.format, delta)
+                        lastFileId = file.id
+                    }
+                }
+
+                if (index.hasHashedNames) {
+                    groups.forEach { group ->
+                        group.files.forEach { file ->
+                            packet.p4((file as NamedGroupFile).name)
+                        }
+                    }
+                }
+
+                Ok(packet)
+            }
 
     private fun ReadOnlyPacket.gSmartOr2(format: Int): Int = if (format == Format.SMART) {
         gSmart2Or4
     } else {
         g2
+    }
+
+    private fun WriteOnlyPacket.pSmartOr2(format: Int, value: Int) {
+        if (format == Format.SMART) {
+            pSmart2Or4(value)
+        } else {
+            p2(value)
+        }
     }
 }
 
