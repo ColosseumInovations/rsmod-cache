@@ -99,6 +99,17 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
+     * Writes the [value] as a short or as an int depending on its size.
+     */
+    fun pSmart2Or4(value: Int) {
+        if (value <= Short.MAX_VALUE) {
+            p2(value)
+        } else {
+            p4(value)
+        }
+    }
+
+    /**
      * Transfers the data from the specified source data into this packet
      * starting from the current [position], reading the data until the amount
      * of bytes transferred equals [length].
