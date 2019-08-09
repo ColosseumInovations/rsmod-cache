@@ -45,13 +45,17 @@ open class Index(
 ) {
 
     val hasHashedNames: Boolean
-        get() = (HASHED_NAME_BIT and flags) != 0
+        get() = (NAME_HASH_BIT and flags) != 0
 
     companion object {
         /**
          * The bit used to identify that the groups inside the archive
          * that this index represents has names that have been hashed.
          */
-        const val HASHED_NAME_BIT = 0x01
+        const val NAME_HASH_BIT = 0x01
+
+        const val WHIRLPOOL_BIT = 0x02
+
+        const val SIZE_BIT = 0x04
     }
 }

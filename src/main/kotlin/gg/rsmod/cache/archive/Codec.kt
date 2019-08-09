@@ -448,7 +448,7 @@ internal object IndexCodec {
         }
 
         val flags = packet.g1
-        val hashedNames = (Index.HASHED_NAME_BIT and flags) != 0
+        val hashedNames = (Index.NAME_HASH_BIT and flags) != 0
 
         val groupCount = packet.gSmartOr2(formatType)
         val groupIds = IntArray(groupCount)

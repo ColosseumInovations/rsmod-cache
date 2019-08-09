@@ -126,6 +126,11 @@ object MalformedIndexRead : DomainMessage("Unexpected end of file for index")
 object ArchiveDoesNotExist : DomainMessage("Archive or its index does not exist")
 
 /**
+ * The group does not exist in the archive.
+ */
+object GroupDoesNotExist : DomainMessage("Group does not exist")
+
+/**
  * The length of a data block that was read from an index file was an illegal
  * value.
  */

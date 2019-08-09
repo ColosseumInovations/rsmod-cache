@@ -18,6 +18,7 @@ import gg.rsmod.cache.domain.ArchivesNotLoaded
 import gg.rsmod.cache.domain.DataFileNotFound
 import gg.rsmod.cache.domain.DomainMessage
 import gg.rsmod.cache.domain.FileSystemDirectoryNotSet
+import gg.rsmod.cache.domain.GroupDoesNotExist
 import gg.rsmod.cache.domain.IndexesAlreadySet
 import gg.rsmod.cache.domain.MasterIndexFileNotFound
 import gg.rsmod.cache.domain.MasterIndexNotLoaded
@@ -74,7 +75,7 @@ open class FileSystem(
             .andThen { putIndexes(it) }
             .andThen { getArchives() }
             .andThen { putArchives(it) }
-            .andThen { loadGroups() }
+            .andThen { loadAllGroups() }
 
     /**
      * Get the available indexes from the master index.
@@ -88,6 +89,17 @@ open class FileSystem(
             indexFiles.keys.toIntArray(), DATA_HEADER_LENGTH,
             indexBlockLength, dataBlockLength
         )
+
+    /**
+     * Put the [newIndexes] into the [indexes] map.
+     */
+    fun putIndexes(newIndexes: Map<Int, Index>): Result<Unit, DomainMessage> =
+        if (indexes.isEmpty()) {
+            indexes.putAll(newIndexes)
+            Ok(Unit)
+        } else {
+            Err(IndexesAlreadySet)
+        }
 
     /**
      * Get the archives by using the [indexes] as a guide of what
@@ -105,56 +117,26 @@ open class FileSystem(
         }
 
     /**
-     * Load and set the group data corresponding to each archive.
+     * Put the [newArchives] into the [archives] map.
      */
-    fun loadGroups(): Result<Unit, DomainMessage> {
-        if (indexes.isEmpty()) {
-            return Err(MasterIndexNotLoaded)
-        } else if (archives.isEmpty()) {
-            return Err(ArchivesNotLoaded)
+    fun putArchives(newArchives: Map<Int, Archive>): Result<Collection<Archive>, DomainMessage> =
+        if (archives.isEmpty()) {
+            archives.putAll(newArchives)
+            Ok(archives.values)
+        } else {
+            Err(ArchivesAlreadySet)
         }
-
-        val idxBuf = ByteArray(indexBlockLength)
-        val dataBuf = ByteArray(dataBlockLength)
-        val validIndexes = indexes.filterKeys { !cipheredArchives.contains(it) }
-        for (entry in validIndexes) {
-            val id = entry.key
-            val index = entry.value
-            val archive = archives[id] ?: return Err(ArchiveDoesNotExist)
-
-            for (group in index.groups.values) {
-                val result = loadGroup(archive, group, Xtea.EMPTY_KEY_SET, idxBuf, dataBuf)
-
-                // TODO: starts getting a bit sus here with err...
-                //  let's try to improve this
-                val err = result.getError()
-                if (err != null) {
-                    return Err(err)
-                }
-            }
-        }
-        return Ok(Unit)
-    }
 
     /**
-     * Load and set the data for [group] in [archive].
+     * Get all th available [Group]s for [archive], if available.
      */
-    fun loadGroup(
-        archive: Archive,
-        group: Group,
-        key: IntArray,
-        tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
-        tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
-    ): Result<Array<ByteArray>, DomainMessage> =
-        getGroupData(archive.id, group.id, tmpIdxBuf, tmpDataBuf)
-            .andThen { compressedData ->
-                CompressionCodec.decode(
-                    ReadOnlyPacket.of(compressedData),
-                    key,
-                    MAX_COMPRESSION_LENGTH,
-                    CRC32()
-                )
-            }.andThen { decompressedData -> putGroupData(archive, group, decompressedData) }
+    fun getGroups(archive: Int): Result<Array<Group>, DomainMessage> {
+        if (indexes.isEmpty()) {
+            return Err(MasterIndexNotLoaded)
+        }
+        val index = indexes[archive] ?: return Err(ArchiveDoesNotExist)
+        return Ok(index.groups.values.toTypedArray())
+    }
 
     /**
      * Get the data block in a group.
@@ -162,8 +144,9 @@ open class FileSystem(
     fun getGroupData(
         archive: Int,
         group: Int,
-        tmpIdxBuf: ByteArray,
-        tmpDataBuf: ByteArray
+        key: IntArray,
+        tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
+        tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
     ): Result<ByteArray, DomainMessage> {
         val idxFile = indexFiles[archive] ?: return Err(ArchiveDoesNotExist)
 
@@ -175,51 +158,117 @@ open class FileSystem(
             group = group, extended = extended, idxBlockLength = indexBlockLength,
             dataHeaderLength = dataHeaderLength, dataBlockLength = dataBlockLength,
             tmpIdxBuf = tmpIdxBuf, tmpDataBuf = tmpDataBuf
-        )
+        ).andThen {
+            CompressionCodec.decode(
+                ReadOnlyPacket.of(it),
+                key,
+                MAX_COMPRESSION_LENGTH,
+                CRC32()
+            )
+        }
     }
 
     /**
-     * Put the group data ([decompressedData]) in [archive] paired to
-     * [group].
+     * Link the [decompressedData] to [group] in [archive].
+     */
+    fun putGroupData(
+        archive: Int,
+        group: Int,
+        fileCount: Int,
+        decompressedData: ByteArray
+    ): Result<Array<ByteArray>, DomainMessage> {
+        val found = getArchive(archive) ?: return Err(ArchiveDoesNotExist)
+        return putGroupData(found, group, fileCount, decompressedData)
+    }
+
+    /**
+     * Link the [decompressedData] to [group] in [archive].
      */
     fun putGroupData(
         archive: Archive,
-        group: Group,
+        group: Int,
+        fileCount: Int,
         decompressedData: ByteArray
     ): Result<Array<ByteArray>, DomainMessage> {
-        val fileCount = group.files.size
         val files: Array<ByteArray>
-        if (fileCount == 1) {
+        if (fileCount <= 1) {
             files = arrayOf(decompressedData)
-            archive.groupData[group.id] = files
+            archive.groupData[group] = files
         } else {
             files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
-            archive.groupData[group.id] = files
+            archive.groupData[group] = files
         }
         return Ok(files)
     }
 
     /**
-     * Put the [newIndexes] into the [indexes] map.
+     * Get the data found for [group] and link it respectively to [archive].
      */
-    fun putIndexes(newIndexes: Map<Int, Index>): Result<Unit, DomainMessage> =
-        if (indexes.isEmpty()) {
-            indexes.putAll(newIndexes)
-            Ok(Unit)
-        } else {
-            Err(IndexesAlreadySet)
-        }
+    fun loadGroup(
+        archive: Int,
+        group: Int,
+        key: IntArray = Xtea.EMPTY_KEY_SET,
+        tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
+        tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
+    ): Result<Array<ByteArray>, DomainMessage> =
+        getGroupData(archive, group, key, tmpIdxBuf, tmpDataBuf)
+            .andThen { data ->
+                val index = indexes[archive] ?: return Err(ArchiveDoesNotExist)
+                val indexGroup = index.groups[group] ?: return Err(GroupDoesNotExist)
+                return putGroupData(archive, group, indexGroup.files.size, data)
+            }
 
     /**
-     * Put the [newArchives] into the [archives] map.
+     * Get the data found for [group] and link it respectively to [archive].
      */
-    fun putArchives(newArchives: Map<Int, Archive>): Result<Unit, DomainMessage> =
-        if (archives.isEmpty()) {
-            archives.putAll(newArchives)
-            Ok(Unit)
-        } else {
-            Err(ArchivesAlreadySet)
+    fun loadGroup(
+        archive: Int,
+        group: Group,
+        key: IntArray = Xtea.EMPTY_KEY_SET,
+        tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
+        tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
+    ): Result<Array<ByteArray>, DomainMessage> =
+        getGroupData(archive, group.id, key, tmpIdxBuf, tmpDataBuf)
+            .andThen { data ->
+                return putGroupData(archive, group.id, group.files.size, data)
+            }
+
+    /**
+     * Load and set the group data corresponding to each archive.
+     */
+    fun loadAllGroups(): Result<Unit, DomainMessage> {
+        if (indexes.isEmpty()) {
+            return Err(MasterIndexNotLoaded)
+        } else if (archives.isEmpty()) {
+            return Err(ArchivesNotLoaded)
         }
+
+        val idxBuf = ByteArray(indexBlockLength)
+        val dataBuf = ByteArray(dataBlockLength)
+
+        val validIndexes = indexes.filterKeys { !cipheredArchives.contains(it) }
+        for (entry in validIndexes) {
+            val archive = entry.key
+            val index = entry.value
+
+            for (group in index.groups.values) {
+                val result = loadGroup(
+                    archive = archive,
+                    group = group,
+                    tmpIdxBuf = idxBuf,
+                    tmpDataBuf = dataBuf
+                )
+
+                // TODO: starts getting a bit sus here with err...
+                //  let's try to improve this
+                val err = result.getError()
+                if (err != null) {
+                    return Err(err)
+                }
+            }
+        }
+        return Ok(Unit)
+    }
 
     fun getIndex(id: Int): Index? = indexes[id]
 
