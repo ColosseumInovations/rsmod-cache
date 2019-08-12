@@ -70,12 +70,13 @@ open class FileSystem(
      * Load all components needed to read every archive and index
      * in the file system.
      */
-    fun loadFully(): Result<Any, DomainMessage> =
+    fun loadFully(): Result<FileSystem, DomainMessage> =
         getIndexes()
             .andThen { putIndexes(it) }
             .andThen { getArchives() }
             .andThen { putArchives(it) }
             .andThen { loadAllGroups() }
+            .andThen { Ok(this) }
 
     /**
      * Get the available indexes from the master index.
