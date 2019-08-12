@@ -129,7 +129,7 @@ open class FileSystem(
         }
 
     /**
-     * Get all th available [Group]s for [archive], if available.
+     * Get all the available [Group]s for [archive], if available.
      */
     fun getGroups(archive: Int): Result<Array<Group>, DomainMessage> {
         if (indexes.isEmpty()) {
@@ -137,6 +137,19 @@ open class FileSystem(
         }
         val index = indexes[archive] ?: return Err(ArchiveDoesNotExist)
         return Ok(index.groups.values.toTypedArray())
+    }
+
+    /**
+     * Get all the available group file data for the specified group in the given
+     * archive.
+     */
+    fun getFiles(archive: Int, group: Int): Result<Array<ByteArray>, DomainMessage> {
+        if (indexes.isEmpty()) {
+            return Err(MasterIndexNotLoaded)
+        }
+        val fsArchive = archives[archive] ?: return Err(ArchiveDoesNotExist)
+        val data = fsArchive.groupData[group] ?: return Err(GroupDoesNotExist)
+        return Ok(data)
     }
 
     /**
