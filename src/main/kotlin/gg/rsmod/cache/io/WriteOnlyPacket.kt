@@ -1,5 +1,7 @@
 package gg.rsmod.cache.io
 
+import gg.rsmod.cache.util.CharacterUtil
+
 /**
  * A write-only packet is a buffer containing an array of bytes and a pointer
  * of the last position in said array that it has written data to.
@@ -96,6 +98,39 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
         buffer[position++] = (value shr 16).toByte()
         buffer[position++] = (value shr 8).toByte()
         buffer[position++] = value.toByte()
+    }
+
+    /**
+     * Writes eight bytes containing the given long value into this packet
+     * in the current position, and then increments the position by eight.
+     */
+    fun p8(value: Long) {
+        buffer[position++] = (value shr 56).toByte()
+        buffer[position++] = (value shr 48).toByte()
+        buffer[position++] = (value shr 40).toByte()
+        buffer[position++] = (value shr 32).toByte()
+        buffer[position++] = (value shr 24).toByte()
+        buffer[position++] = (value shr 16).toByte()
+        buffer[position++] = (value shr 8).toByte()
+        buffer[position++] = value.toByte()
+    }
+
+    /**
+     * Writes a byte for each character in the given string value in
+     * the current position and terminates the string with a 0 written
+     * as a byte, all while incrementing the position on each write by
+     * one.
+     */
+    fun pjstr(value: String) {
+        value.forEach { character ->
+            val char = if (character.toInt() == 63) {
+                128
+            } else {
+                CharacterUtil.VALID_CHARACTERS.indexOf(character) + 128
+            }
+            p1(char)
+        }
+        p1(0)
     }
 
     /**
