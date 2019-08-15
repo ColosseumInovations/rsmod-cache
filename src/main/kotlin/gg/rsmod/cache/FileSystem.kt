@@ -79,6 +79,17 @@ open class FileSystem(
             .andThen { Ok(this) }
 
     /**
+     * Load the components required to be able to load the data
+     * from archives and indexes.
+     */
+    fun loadMasterIndex(): Result<FileSystem, DomainMessage> =
+        getIndexes()
+            .andThen { putIndexes(it) }
+            .andThen { getArchives() }
+            .andThen { putArchives(it) }
+            .andThen { Ok(this) }
+
+    /**
      * Get the available indexes from the master index.
      *
      * @return a [Result] with the success value being a map of the [Index]
