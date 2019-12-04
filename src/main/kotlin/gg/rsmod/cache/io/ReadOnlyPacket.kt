@@ -25,7 +25,7 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
     constructor(capacity: Int) : this(ByteArray(capacity))
 
     /**
-     * Get the [Byte] located in position [index] on the backing array.
+     * Return the the [Byte] located in position [index] on the backing array.
      */
     operator fun get(index: Int): Byte = buffer[index]
 
@@ -63,25 +63,57 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Get next value as a signed byte.
+     * Read the next value as a signed byte.
      */
     val g1s: Int
         get() = this[position++].toInt()
 
     /**
-     * Get next value as an unsigned byte.
+     * Read the next signed byte minus 128 ([g1s] - 128) as a
+     * signed byte.
+     */
+    val g1s_altA: Int
+        get() = g1s - 128
+
+    /**
+     * Read the negated value of the next signed byte (-[g1s]).
+     */
+    val g1s_altC: Int
+        get() = 0 - g1s
+
+    /**
+     * Read 128 subtracted by the next signed byte (128 - [g1s]).
+     */
+    val g1s_altS: Int
+        get() = 128 - g1s
+
+    /**
+     * Read the next value as an unsigned byte.
      */
     val g1: Int
         get() = g1s and 0xFF
 
     /**
-     * Get next values as an unsigned short.
+     * Read the next signed byte minus 128 ([g1s] - 128) as an
+     * unsigned byte.
      */
-    val g2: Int
-        get() = (g1 shl 8) or g1
+    val g1_altA: Int
+        get() = (g1s - 128) and 0xFF
 
     /**
-     * Get next values as a signed short.
+     * Read the negated value of the next unsigned byte (-[g1]).
+     */
+    val g1_altC: Int
+        get() = 0 - g1
+
+    /**
+     * Read 128 subtracted by the next unsigned byte (128 - [g1]).
+     */
+    val g1_altS: Int
+        get() = 128 - g1
+
+    /**
+     * Read the next two bytes as a signed short.
      */
     val g2s: Int
         get() = {
@@ -94,21 +126,113 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         }()
 
     /**
-     * Get next values as a medium.
+     * Read the next two bytes as a signed, little-endian short.
+     */
+    val g2sLE: Int
+        get() = {
+            val value = g2LE
+            if (value > 0x7FFF) {
+                value - 0x10000
+            } else {
+                value
+            }
+        }()
+
+    /**
+     * Read the next two bytes as an unsigned short.
+     */
+    val g2: Int
+        get() = (g1 shl 8) or g1
+
+    /**
+     * Read the next two bytes as an unsigned short with
+     * the first byte being read as an unsigned byte and
+     * second byte being read as type-A ([g1_altA]).
+     */
+    val g2_altA: Int
+        get() = (g1 shl 8) or g1_altA
+
+    /**
+     * Read the next two bytes as an unsigned, little-endian short.
+     */
+    val g2LE: Int
+        get() = g1 or (g1 shl 8)
+
+    /**
+     * Read the next two bytes as an unsigned, little-endian short
+     * with the first byte being read as type-A ([g1_altA])
+     * and second byte being read as an unsigned byte.
+     */
+    val g2LE_altA: Int
+        get() = g1_altA or (g1 shl 8)
+
+    /**
+     * Read the next three bytes as a signed medium.
+     */
+    val g3s: Int
+        get() = {
+            val value = g3
+            if (value > 0x7FFFFF) {
+                value - 0x1000000
+            } else {
+                value
+            }
+        }()
+
+    /**
+     * Read the next three bytes as an unsigned medium.
      */
     val g3: Int
-        get() = ((g1 shl 16) or (g1 shl 8) or g1)
+        get() = (g1 shl 16) or (g1 shl 8) or g1
 
     /**
-     * Get next values as an int.
+     * Read the next four bytes as an int.
      */
     val g4: Int
-        get() = ((g1 shl 24) or (g1 shl 16) or (g1 shl 8) or g1)
+        get() = (g1 shl 24) or (g1 shl 16) or (g1 shl 8) or g1
 
     /**
-     * Get next values as a short or an int.
+     * Read the next four bytes as a big-endian int.
      */
-    val gSmart2Or4: Int
+    val g4_alt1: Int
+        get() = g1 or (g1 shl 8) or (g1 shl 16) or (g1 shl 24)
+
+    /**
+     * Read the next four bytes as a big-endian int, with the
+     * caveat that the order of the first two bytes are swapped,
+     * and that the order of the last two bytes are swapped.
+     * Also known as "V1 order", or "Middle order".
+     */
+    val g4_alt2: Int
+        get() = (g1 shl 8) or g1 or (g1 shl 24) or (g1 shl 16)
+
+    /**
+     * Read the next four bytes as an (little-endian) int, with
+     * the caveat that the order of the first two bytes are swapped,
+     * and that the order of the last two bytes are swapped.
+     * Also known as "V2 order", or "Inverse Middle order".
+     */
+    val g4_alt3: Int
+        get() = (g1 shl 16) or (g1 shl 24) or g1 or (g1 shl 8)
+
+    /**
+     * Read the next one or two bytes based on the value
+     * of the next byte.
+     */
+    val gsmart1or2: Int
+        get() = {
+            if ((this[position].toInt() and 0xFF) < 128) {
+                g1
+            } else {
+                g2 - 0x8000
+            }
+        }()
+
+    /**
+     * Read the next two or four bytes based on the value
+     * of the next byte.
+     */
+    val gsmart2or4: Int
         get() = {
             if (this[position] >= 0) {
                 g2
@@ -118,7 +242,7 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         }()
 
     /**
-     * Get next values as a long.
+     * Read the next eight bytes as a long.
      */
     val g8: Long
         get() = {
@@ -128,7 +252,14 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         }()
 
     /**
-     * Get the next values as a string until terminated.
+     * Convert the next four bytes into a count of bits to convert
+     * into, and return, a float.
+     */
+    val gfloat: Float
+        get() = Float.fromBits(g4)
+
+    /**
+     * Read the the next bytes as a string until terminated.
      */
     val gjstr: String
         get() {
@@ -154,20 +285,32 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         }
 
     /**
-     * Get the next [length] amount of values from this packet and put them
-     * on [dst] starting from [offset].
+     * Get the the next [length] amount of bytes from this packet and
+     * write them on [dst] starting from [position].
      */
-    fun gdata(dst: ByteArray, offset: Int, length: Int) {
+    fun gdata(dst: ByteArray, position: Int, length: Int) {
         for (i in 0 until length) {
-            dst[offset + i] = g1.toByte()
+            dst[position + i] = g1.toByte()
         }
     }
 
     /**
-     * Get and put the next values from this packet and put them on [dst].
-     * The amount of values being put is equal to the size of [dst].
+     * Get and put the next bytes from this packet onto [dst].
+     * The amount of bytes being transferred is equal to the
+     * size of [dst].
      */
     fun gdata(dst: ByteArray) = gdata(dst, 0, dst.size)
+
+    /**
+     * Get the next [length] amount of bytes in inverse order,
+     * as [g1s_altA] and put them into [dst] starting from
+     * [position].
+     */
+    fun gdataLE_altA(dst: ByteArray, position: Int, length: Int) {
+        for (i in position + length - 1 downTo position) {
+            dst[i] = g1s_altA.toByte()
+        }
+    }
 
     companion object {
 

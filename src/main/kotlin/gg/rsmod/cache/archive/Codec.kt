@@ -600,7 +600,7 @@ internal object IndexCodec {
             }
 
     private fun ReadOnlyPacket.gSmartOr2(format: Int): Int = if (format == Format.SMART) {
-        gSmart2Or4
+        gsmart2or4
     } else {
         g2
     }
