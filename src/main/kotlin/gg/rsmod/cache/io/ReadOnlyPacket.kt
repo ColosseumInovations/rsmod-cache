@@ -116,27 +116,27 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
      * Read the next two bytes as a signed short.
      */
     val g2s: Int
-        get() = {
+        get() {
             val value = g2
-            if (value > Short.MAX_VALUE) {
+            return if (value > Short.MAX_VALUE) {
                 value - 0x10000
             } else {
                 value
             }
-        }()
+        }
 
     /**
      * Read the next two bytes as a signed, little-endian short.
      */
     val g2sLE: Int
-        get() = {
+        get() {
             val value = g2LE
-            if (value > 0x7FFF) {
+            return if (value > 0x7FFF) {
                 value - 0x10000
             } else {
                 value
             }
-        }()
+        }
 
     /**
      * Read the next two bytes as an unsigned short.
@@ -170,14 +170,14 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
      * Read the next three bytes as a signed medium.
      */
     val g3s: Int
-        get() = {
+        get() {
             val value = g3
-            if (value > 0x7FFFFF) {
+            return if (value > 0x7FFFFF) {
                 value - 0x1000000
             } else {
                 value
             }
-        }()
+        }
 
     /**
      * Read the next three bytes as an unsigned medium.
@@ -220,36 +220,36 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
      * of the next byte.
      */
     val gsmart1or2: Int
-        get() = {
-            if ((this[position].toInt() and 0xFF) < 128) {
+        get() {
+            return if ((this[position].toInt() and 0xFF) < 128) {
                 g1
             } else {
                 g2 - 0x8000
             }
-        }()
+        }
 
     /**
      * Read the next two or four bytes based on the value
      * of the next byte.
      */
     val gsmart2or4: Int
-        get() = {
-            if (this[position] >= 0) {
+        get() {
+            return if (this[position] >= 0) {
                 g2
             } else {
                 g4 and Int.MAX_VALUE
             }
-        }()
+        }
 
     /**
      * Read the next eight bytes as a long.
      */
     val g8: Long
-        get() = {
+        get() {
             val l = g4.toLong() and 4294967295L
             val r = g4.toLong() and 4294967295L
-            (l shl 32) or r
-        }()
+            return (l shl 32) or r
+        }
 
     /**
      * Convert the next four bytes into a count of bits to convert
