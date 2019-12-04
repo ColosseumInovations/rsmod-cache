@@ -285,6 +285,22 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         }
 
     /**
+     * Read the next bytes as a string until terminated.
+     */
+    val fastgjstr: String?
+        get() {
+            val empty = this[position].toInt() == 0
+            if (empty) {
+                position++
+            }
+            return if (empty) {
+                null
+            } else {
+                gjstr
+            }
+        }
+
+    /**
      * Get the the next [length] amount of bytes from this packet and
      * write them on [dst] starting from [position].
      */
