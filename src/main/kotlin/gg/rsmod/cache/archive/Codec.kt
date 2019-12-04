@@ -607,7 +607,7 @@ internal object IndexCodec {
 
     private fun WriteOnlyPacket.pSmartOr2(format: Int, value: Int) {
         if (format == Format.SMART) {
-            pSmart2Or4(value)
+            psmart2or4(value)
         } else {
             p2(value)
         }

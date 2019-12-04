@@ -71,12 +71,64 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
+     * Set [value] in our buffer as [value] plus 128, and increment
+     * our [position] by one.
+     */
+    fun p1_altA(value: Int) {
+        buffer[position++] = (value + 128).toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as negated [value], and increment
+     * our [position] by one.
+     */
+    fun p1_altC(value: Int) {
+        buffer[position++] = (0 - value).toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as 128 minus [value], and increment
+     * our [position] by one.
+     */
+    fun p1_altS(value: Int) {
+        buffer[position++] = (128 - value).toByte()
+    }
+
+    /**
      * Writes two bytes containing the given short value into this packet
      * in the current position, and then increments the position by two.
      */
     fun p2(value: Int) {
         buffer[position++] = (value shr 8).toByte()
         buffer[position++] = value.toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as two bytes, the second byte being set
+     * to [value] plus 128, and increment our [position] by two.
+     */
+    fun p2_altA(value: Int) {
+        buffer[position++] = (value shr 8).toByte()
+        buffer[position++] = (value + 128).toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as two bytes in little-endian order,
+     * and increment our [position] by two.
+     */
+    fun p2LE(value: Int) {
+        buffer[position++] = value.toByte()
+        buffer[position++] = (value shr 8).toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as two bytes in little-endian order,
+     * the second byte being set to [value] plus 128, and increment
+     * our [position] by two.
+     */
+    fun p2LE_altA(value: Int) {
+        buffer[position++] = (value + 128).toByte()
+        buffer[position++] = (value shr 8).toByte()
     }
 
     /**
@@ -94,6 +146,51 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
      * in the current position, and then increments the position by four.
      */
     fun p4(value: Int) {
+        buffer[position++] = (value shr 24).toByte()
+        buffer[position++] = (value shr 16).toByte()
+        buffer[position++] = (value shr 8).toByte()
+        buffer[position++] = value.toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as four bytes in little-endian order,
+     * and increment our [position] by four.
+     */
+    fun p4_alt1(value: Int) {
+        buffer[position++] = value.toByte()
+        buffer[position++] = (value shr 8).toByte()
+        buffer[position++] = (value shr 16).toByte()
+        buffer[position++] = (value shr 24).toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as four bytes in "v1" or "middle"
+     * order, and increment our [position] by four.
+     */
+    fun p4_alt2(value: Int) {
+        buffer[position++] = (value shr 8).toByte()
+        buffer[position++] = value.toByte()
+        buffer[position++] = (value shr 24).toByte()
+        buffer[position++] = (value shr 16).toByte()
+    }
+
+    /**
+     * Set [value] in our buffer as four bytes in "v2" or "inverse middle"
+     * order, and increment our [position] by four.
+     */
+    fun p4_alt3(value: Int) {
+        buffer[position++] = (value shr 16).toByte()
+        buffer[position++] = (value shr 24).toByte()
+        buffer[position++] = value.toByte()
+        buffer[position++] = (value shr 8).toByte()
+    }
+
+    /**
+     * Writes five bytes containing the given long value into this packet
+     * in the current position, and then increments the position by five.
+     */
+    fun p5(value: Long) {
+        buffer[position++] = (value shr 32).toByte()
         buffer[position++] = (value shr 24).toByte()
         buffer[position++] = (value shr 16).toByte()
         buffer[position++] = (value shr 8).toByte()
@@ -134,9 +231,20 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
+     * Writes the [value] as a byte or as a short depending on its size.
+     */
+    fun psmart1or2(value: Int) {
+        if (value <= Byte.MAX_VALUE) {
+            p1(value)
+        } else {
+            p2(value)
+        }
+    }
+
+    /**
      * Writes the [value] as a short or as an int depending on its size.
      */
-    fun pSmart2Or4(value: Int) {
+    fun psmart2or4(value: Int) {
         if (value <= Short.MAX_VALUE) {
             p2(value)
         } else {
