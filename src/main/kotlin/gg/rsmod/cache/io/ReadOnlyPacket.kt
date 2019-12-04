@@ -242,6 +242,26 @@ class ReadOnlyPacket(private val buffer: ByteArray) {
         }
 
     /**
+     * Read the next one or two bytes as [gsmart1or2] continuously
+     * until the value read is not equal to [Short.MAX_VALUE].
+     * On each iteration, the return value will increment by
+     * [Short.MAX_VALUE] and at the end of the iterations, the
+     * value that did not equal to [Short.MAX_VALUE] will
+     * be added to the return value.
+     */
+    val gincsmart: Int
+        get() {
+            var value = 0
+            var current = gsmart1or2
+            while (current == Short.MAX_VALUE.toInt()) {
+                current = gsmart1or2
+                value += Short.MAX_VALUE
+            }
+            value += current
+            return value
+        }
+
+    /**
      * Read the next eight bytes as a long.
      */
     val g8: Long
