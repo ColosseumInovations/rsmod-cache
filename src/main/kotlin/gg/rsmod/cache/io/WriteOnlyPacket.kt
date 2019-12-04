@@ -63,8 +63,7 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes one byte containing the given byte value into this packet
-     * in the current position, and then increments the position by one.
+     * Set [value] in our buffer and increment our [position] by one.
      */
     fun p1(value: Int) {
         buffer[position++] = value.toByte()
@@ -95,8 +94,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes two bytes containing the given short value into this packet
-     * in the current position, and then increments the position by two.
+     * Set [value] in our buffer as two bytes, and increment
+     * our [position] by one.
      */
     fun p2(value: Int) {
         buffer[position++] = (value shr 8).toByte()
@@ -132,8 +131,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes three bytes containing the given medium value into this packet
-     * in the current position, and then increments the position by three.
+     * Set [value] in our buffer as three bytes, and increment
+     * our [position] by three.
      */
     fun p3(value: Int) {
         buffer[position++] = (value shr 16).toByte()
@@ -142,8 +141,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes four bytes containing the given int value into this packet
-     * in the current position, and then increments the position by four.
+     * Set [value] in our buffer as four bytes, and increment
+     * our [position] by four.
      */
     fun p4(value: Int) {
         buffer[position++] = (value shr 24).toByte()
@@ -186,8 +185,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes five bytes containing the given long value into this packet
-     * in the current position, and then increments the position by five.
+     * Set [value] in our buffer as five bytes, and increment
+     * our [position] by five.
      */
     fun p5(value: Long) {
         buffer[position++] = (value shr 32).toByte()
@@ -198,8 +197,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes eight bytes containing the given long value into this packet
-     * in the current position, and then increments the position by eight.
+     * Set [value] in our buffer as eight bytes, and increment
+     * our [position] by eight.
      */
     fun p8(value: Long) {
         buffer[position++] = (value shr 56).toByte()
@@ -231,7 +230,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes the [value] as a byte or as a short depending on its size.
+     * Set [value] in our buffer as one or two bytes depending on the
+     * [value], and increment our [position] by one or two.
      */
     fun psmart1or2(value: Int) {
         if (value <= Byte.MAX_VALUE) {
@@ -242,7 +242,8 @@ class WriteOnlyPacket(private val buffer: ByteArray) {
     }
 
     /**
-     * Writes the [value] as a short or as an int depending on its size.
+     * Set [value] in our buffer as two or four bytes depending on the
+     * [value], and increment our [position] by two or four.
      */
     fun psmart2or4(value: Int) {
         if (value <= Short.MAX_VALUE) {
