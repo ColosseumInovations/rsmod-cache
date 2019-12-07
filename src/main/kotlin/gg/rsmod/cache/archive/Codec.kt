@@ -253,7 +253,7 @@ internal object DataCodec {
             }
 }
 
-internal object CompressionCodec {
+object CompressionCodec {
 
     fun decode(
         packet: ReadOnlyPacket,
