@@ -4,6 +4,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.andThen
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
 import gg.rsmod.cache.archive.Archive
 import gg.rsmod.cache.archive.CompressionCodec
@@ -136,7 +137,7 @@ open class FileSystem(
         if (indexes.isEmpty()) {
             Err(MasterIndexNotLoaded)
         } else {
-            val archives = indexes.keys.associateWith { Archive(it, mutableMapOf()) }
+            val archives = indexes.keys.associateWith { Archive(it, ByteArray(0), mutableMapOf()) }
             Ok(archives)
         }
 
@@ -181,7 +182,6 @@ open class FileSystem(
     fun getGroupData(
         archive: Int,
         group: Int,
-        key: IntArray,
         tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
         tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
     ): Result<ByteArray, DomainMessage> {
@@ -195,14 +195,7 @@ open class FileSystem(
             group = group, extended = extended, idxBlockLength = indexBlockLength,
             dataHeaderLength = dataHeaderLength, dataBlockLength = dataBlockLength,
             tmpIdxBuf = tmpIdxBuf, tmpDataBuf = tmpDataBuf
-        ).andThen {
-            CompressionCodec.decode(
-                ReadOnlyPacket.of(it),
-                key,
-                MAX_COMPRESSION_LENGTH,
-                CRC32()
-            )
-        }
+        )
     }
 
     /**
@@ -212,10 +205,11 @@ open class FileSystem(
         archive: Int,
         group: Int,
         fileCount: Int,
+        rawData: ByteArray,
         decompressedData: ByteArray
     ): Result<Array<ByteArray>, DomainMessage> {
         val found = getArchive(archive) ?: return Err(ArchiveDoesNotExist)
-        return putGroupData(found, group, fileCount, decompressedData)
+        return putGroupData(found, group, fileCount, rawData, decompressedData)
     }
 
     /**
@@ -225,6 +219,7 @@ open class FileSystem(
         archive: Archive,
         group: Int,
         fileCount: Int,
+        rawData: ByteArray,
         decompressedData: ByteArray
     ): Result<Array<ByteArray>, DomainMessage> {
         val files: Array<ByteArray>
@@ -235,6 +230,7 @@ open class FileSystem(
             files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
             archive.groupData[group] = files
         }
+        archive.rawData = rawData
         return Ok(files)
     }
 
@@ -247,13 +243,22 @@ open class FileSystem(
         key: IntArray = Xtea.EMPTY_KEY_SET,
         tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
         tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
-    ): Result<Array<ByteArray>, DomainMessage> =
-        getGroupData(archive, group, key, tmpIdxBuf, tmpDataBuf)
+    ): Result<Array<ByteArray>, DomainMessage> {
+        val groupDataResult = getGroupData(archive, group, tmpIdxBuf, tmpDataBuf)
+        return groupDataResult
             .andThen { data ->
+                CompressionCodec.decode(
+                    ReadOnlyPacket.of(data),
+                    key,
+                    MAX_COMPRESSION_LENGTH,
+                    CRC32()
+                )
+            }.andThen { data ->
                 val index = indexes[archive] ?: return Err(ArchiveDoesNotExist)
                 val indexGroup = index.groups[group] ?: return Err(GroupDoesNotExist)
-                return putGroupData(archive, group, indexGroup.files.size, data)
+                putGroupData(archive, group, indexGroup.files.size, groupDataResult.get()!!, data)
             }
+    }
 
     /**
      * Get the data found for [group] and link it respectively to [archive].
@@ -264,11 +269,20 @@ open class FileSystem(
         key: IntArray = Xtea.EMPTY_KEY_SET,
         tmpIdxBuf: ByteArray = ByteArray(indexBlockLength),
         tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
-    ): Result<Array<ByteArray>, DomainMessage> =
-        getGroupData(archive, group.id, key, tmpIdxBuf, tmpDataBuf)
+    ): Result<Array<ByteArray>, DomainMessage> {
+        val groupDataResult = getGroupData(archive, group.id, tmpIdxBuf, tmpDataBuf)
+        return groupDataResult
             .andThen { data ->
-                return putGroupData(archive, group.id, group.files.size, data)
+                CompressionCodec.decode(
+                    ReadOnlyPacket.of(data),
+                    key,
+                    MAX_COMPRESSION_LENGTH,
+                    CRC32()
+                )
+            }.andThen { data ->
+                putGroupData(archive, group.id, group.files.size, groupDataResult.get()!!, data)
             }
+    }
 
     /**
      * Load and set the group data corresponding to each archive.
