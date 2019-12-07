@@ -6,7 +6,7 @@ apply from: 'gradle/properties.gradle'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
 group 'gg.rsmod'
-version '0.7.6-SNAPSHOT'
+version '0.7.7-SNAPSHOT'
 
 repositories {
     mavenCentral()

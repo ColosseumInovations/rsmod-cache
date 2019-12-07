@@ -230,7 +230,7 @@ open class FileSystem(
             files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
             archive.groupData[group] = files
         }
-        archive.rawData[group] = decompressedData
+        archive.rawData[group] = rawData
         return Ok(files)
     }
 
@@ -245,6 +245,7 @@ open class FileSystem(
         tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
     ): Result<Array<ByteArray>, DomainMessage> {
         val groupDataResult = getGroupData(archive, group, tmpIdxBuf, tmpDataBuf)
+        val rawData = groupDataResult.get()?.copyOf() ?: ByteArray(0)
         return groupDataResult
             .andThen { data ->
                 CompressionCodec.decode(
@@ -256,7 +257,7 @@ open class FileSystem(
             }.andThen { data ->
                 val index = indexes[archive] ?: return Err(ArchiveDoesNotExist)
                 val indexGroup = index.groups[group] ?: return Err(GroupDoesNotExist)
-                putGroupData(archive, group, indexGroup.files.size, groupDataResult.get()!!, data)
+                putGroupData(archive, group, indexGroup.files.size, rawData, data)
             }
     }
 
@@ -271,6 +272,7 @@ open class FileSystem(
         tmpDataBuf: ByteArray = ByteArray(dataBlockLength)
     ): Result<Array<ByteArray>, DomainMessage> {
         val groupDataResult = getGroupData(archive, group.id, tmpIdxBuf, tmpDataBuf)
+        val rawData = groupDataResult.get()?.copyOf() ?: ByteArray(0)
         return groupDataResult
             .andThen { data ->
                 CompressionCodec.decode(
@@ -280,7 +282,7 @@ open class FileSystem(
                     CRC32()
                 )
             }.andThen { data ->
-                putGroupData(archive, group.id, group.files.size, groupDataResult.get()!!, data)
+                putGroupData(archive, group.id, group.files.size, rawData, data)
             }
     }
 
