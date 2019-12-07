@@ -34,7 +34,7 @@ object Compression {
     const val GZIP = 2
 }
 
-internal object BZip2 {
+object BZip2 {
 
     private const val BLOCK_LENGTH = 1
 
@@ -68,7 +68,7 @@ internal object BZip2 {
     }
 }
 
-internal object GZip {
+object GZip {
 
     fun compress(data: ByteArray): ByteArray {
         val output = ByteArrayOutputStream()
