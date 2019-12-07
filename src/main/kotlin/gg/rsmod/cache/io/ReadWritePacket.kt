@@ -206,9 +206,39 @@ class ReadWritePacket(buffer: ByteArray) {
     fun p1(value: Int) = writer.p1(value)
 
     /**
+     * @see [WriteOnlyPacket.p1_altA]
+     */
+    fun p1_altA(value: Int) = writer.p1_altA(value)
+
+    /**
+     * @see [WriteOnlyPacket.p1_altC]
+     */
+    fun p1_altC(value: Int) = writer.p1_altC(value)
+
+    /**
+     * @see [WriteOnlyPacket.p1_altS]
+     */
+    fun p1_altS(value: Int) = writer.p1_altS(value)
+
+    /**
      * @see [WriteOnlyPacket.p2]
      */
     fun p2(value: Int) = writer.p2(value)
+
+    /**
+     * @see [WriteOnlyPacket.p2_altA]
+     */
+    fun p2_altA(value: Int) = writer.p2_altA(value)
+
+    /**
+     * @see [WriteOnlyPacket.p2LE]
+     */
+    fun p2LE(value: Int) = writer.p2LE(value)
+
+    /**
+     * @see [WriteOnlyPacket.p2LE_altA]
+     */
+    fun p2LE_altA(value: Int) = writer.p2LE_altA(value)
 
     /**
      * @see [WriteOnlyPacket.p3]
@@ -219,6 +249,46 @@ class ReadWritePacket(buffer: ByteArray) {
      * @see [WriteOnlyPacket.p4]
      */
     fun p4(value: Int) = writer.p4(value)
+
+    /**
+     * @see [WriteOnlyPacket.p4_alt1]
+     */
+    fun p4_alt1(value: Int) = writer.p4_alt1(value)
+
+    /**
+     * @see [WriteOnlyPacket.p4_alt2]
+     */
+    fun p4_alt2(value: Int) = writer.p4_alt2(value)
+
+    /**
+     * @see [WriteOnlyPacket.p4_alt3]
+     */
+    fun p4_alt3(value: Int) = writer.p4_alt3(value)
+
+    /**
+     * @see [WriteOnlyPacket.p5]
+     */
+    fun p5(value: Long) = writer.p5(value)
+
+    /**
+     * @see [WriteOnlyPacket.p8]
+     */
+    fun p8(value: Long) = writer.p8(value)
+
+    /**
+     * @see [WriteOnlyPacket.pjstr]
+     */
+    fun pjstr(value: String) = writer.pjstr(value)
+
+    /**
+     * @see [WriteOnlyPacket.psmart1or2]
+     */
+    fun psmart1or2(value: Int) = writer.psmart1or2(value)
+
+    /**
+     * @see [WriteOnlyPacket.psmart2or4]
+     */
+    fun psmart2or4(value: Int) = writer.psmart2or4(value)
 
     /**
      * @see [WriteOnlyPacket.pdata]
