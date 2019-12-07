@@ -381,28 +381,40 @@ internal object MasterIndexCodec {
             masterIndexFile.read(indexBuf, 0, indexLength)
 
             val crc = CRC32()
-            val decodeRes = decodeIndex(
+            val indexResult = decodeIndex(
                 indexFile = indexFile,
                 masterIndex = masterIndex,
                 dataFile = dataFile,
                 indexBuf = ReadOnlyPacket.of(indexBuf),
                 dataBuf = dataBuf,
                 headerLength = headerLength,
-                dataLength = dataLength,
-                crc = crc
+                dataLength = dataLength
             )
 
-            // TODO: starts getting a bit sus here with err...
-            //  let's try to improve this
-            val decodeErr = decodeRes.getError()
-            if (decodeErr != null) {
-                return Err(decodeErr)
+            val indexError = indexResult.getError()
+            if (indexError != null) {
+                return Err(indexError)
             }
 
-            val packet = ReadOnlyPacket.of(decodeRes.get()!!)
+            val compressionResult = indexResult.andThen { dataBlock ->
+                CompressionCodec.decode(
+                    ReadOnlyPacket.of(dataBlock.data),
+                    Xtea.EMPTY_KEY_SET,
+                    FileSystem.MAX_COMPRESSION_LENGTH,
+                    crc
+                )
+            }
+
+            val compressionError = compressionResult.getError()
+            if (compressionError != null) {
+                return Err(compressionError)
+            }
+
+            val packet = ReadOnlyPacket.of(compressionResult.get()!!)
             val index = IndexCodec.decode(
                 packet = packet,
-                crc = crc.hashCode()
+                crc = crc.hashCode(),
+                data = indexResult.get()?.data ?: ByteArray(0)
             )
             indexes[indexFile] = index
         }
@@ -417,22 +429,14 @@ internal object MasterIndexCodec {
         indexBuf: ReadOnlyPacket,
         dataBuf: ByteArray,
         headerLength: Int,
-        dataLength: Int,
-        crc: CRC32
-    ): Result<ByteArray, DomainMessage> {
+        dataLength: Int
+    ): Result<FileSystemData, DomainMessage> {
         return DataBlockPointerCodec.decode(indexBuf)
             .andThen { metadata ->
                 DataCodec.decode(
                     dataFile = dataFile, archive = masterIndex, group = indexFile,
                     extended = false, offset = metadata.offset, headerLength = headerLength,
                     blockLength = dataLength, totalLength = metadata.length, tmpDataBuf = dataBuf
-                )
-            }.andThen { dataBlock ->
-                CompressionCodec.decode(
-                    ReadOnlyPacket.of(dataBlock.data),
-                    Xtea.EMPTY_KEY_SET,
-                    FileSystem.MAX_COMPRESSION_LENGTH,
-                    crc
                 )
             }
     }
@@ -446,7 +450,11 @@ internal object MasterIndexCodec {
 
 internal object IndexCodec {
 
-    fun decode(packet: ReadOnlyPacket, crc: Int): Index {
+    fun decode(
+        packet: ReadOnlyPacket,
+        crc: Int,
+        data: ByteArray
+    ): Index {
         val formatType = packet.g1
         val format = when (formatType) {
             Format.NONE -> 0
@@ -540,7 +548,14 @@ internal object IndexCodec {
             groups[group.id] = group
         }
 
-        return Index(crc, formatType, format, flags, groups)
+        return Index(
+            crc,
+            formatType,
+            format,
+            flags,
+            groups,
+            data
+        )
     }
 
     fun encode(

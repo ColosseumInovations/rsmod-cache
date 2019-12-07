@@ -41,7 +41,12 @@ class NamedGroupFile(
  * An [Index] contains metadata for an [Archive].
  */
 open class Index(
-    val crc: Int, val formatType: Int, val format: Int, val flags: Int, val groups: MutableMap<Int, out Group>
+    val crc: Int,
+    val formatType: Int,
+    val format: Int,
+    val flags: Int,
+    val groups: MutableMap<Int, out Group>,
+    val data: ByteArray
 ) {
 
     val hasHashedNames: Boolean
