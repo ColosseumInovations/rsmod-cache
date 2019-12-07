@@ -413,7 +413,7 @@ internal object MasterIndexCodec {
             val packet = ReadOnlyPacket.of(compressionResult.get()!!)
             val index = IndexCodec.decode(
                 packet = packet,
-                crc = crc.hashCode(),
+                crc = crc.value.toInt(),
                 data = indexResult.get()?.data ?: ByteArray(0)
             )
             indexes[indexFile] = index
