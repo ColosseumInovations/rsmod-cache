@@ -137,7 +137,7 @@ open class FileSystem(
         if (indexes.isEmpty()) {
             Err(MasterIndexNotLoaded)
         } else {
-            val archives = indexes.keys.associateWith { Archive(it, ByteArray(0), mutableMapOf()) }
+            val archives = indexes.keys.associateWith { Archive(it, mutableMapOf(), mutableMapOf()) }
             Ok(archives)
         }
 
@@ -230,7 +230,7 @@ open class FileSystem(
             files = GroupFileCodec.decode(ReadOnlyPacket.of(decompressedData), fileCount)
             archive.groupData[group] = files
         }
-        archive.rawData = rawData
+        archive.rawData[group] = decompressedData
         return Ok(files)
     }
 

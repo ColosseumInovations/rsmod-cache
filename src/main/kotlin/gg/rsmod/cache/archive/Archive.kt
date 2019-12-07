@@ -9,29 +9,9 @@ package gg.rsmod.cache.archive
  */
 data class Archive(
     val id: Int,
-    var rawData: ByteArray,
+    var rawData: MutableMap<Int, ByteArray>,
     val groupData: MutableMap<Int, Array<ByteArray>>
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Archive
-
-        if (id != other.id) return false
-        if (!rawData.contentEquals(other.rawData)) return false
-        if (groupData != other.groupData) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id
-        result = 31 * result + rawData.contentHashCode()
-        result = 31 * result + groupData.hashCode()
-        return result
-    }
-}
+)
 
 /**
  * A group contains [GroupFile]s.
