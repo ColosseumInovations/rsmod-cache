@@ -19,14 +19,14 @@ class IndexTests {
             arrayOf(GroupFile(0), GroupFile(1), GroupFile(2), GroupFile(3))
         )
         val groups: Array<Group> = files.mapIndexed { index, it -> Group(id = index, crc = 0, version = 0, files = it) }.toTypedArray()
-        val index = Index(formatType = 0, format = 0, flags = 0, groups = groups.associateBy { it.id } as MutableMap<Int, Group>)
+        val index = Index(crc = 0, formatType = 0, format = 0, flags = 0, groups = groups.associateBy { it.id } as MutableMap<Int, Group>)
 
         val data = ByteArray(1024)
 
         val encode = IndexCodec.encode(WriteOnlyPacket.of(data), index)
         assertNull(encode.getError())
 
-        val decode = IndexCodec.decode(ReadOnlyPacket.of(data))
+        val decode = IndexCodec.decode(packet = ReadOnlyPacket.of(data), crc = 0)
         assertSame(index.formatType, decode.formatType)
         assertSame(index.format, decode.format)
         assertSame(index.flags, decode.flags)
@@ -51,14 +51,14 @@ class IndexTests {
             arrayOf(NamedGroupFile(0, 10), NamedGroupFile(1, 10), NamedGroupFile(2, 10), NamedGroupFile(3, 10))
         )
         val groups: Array<NamedGroup> = files.mapIndexed { index, it -> NamedGroup(id = index, crc = 0, version = 0, files = it, name = 10) }.toTypedArray()
-        val index = Index(formatType = 0, format = 0, flags = 1, groups = groups.associateBy { it.id } as MutableMap<Int, NamedGroup>)
+        val index = Index(crc = 0, formatType = 0, format = 0, flags = 1, groups = groups.associateBy { it.id } as MutableMap<Int, NamedGroup>)
 
         val data = ByteArray(1024)
 
         val encode = IndexCodec.encode(WriteOnlyPacket.of(data), index)
         assertNull(encode.getError())
 
-        val decode = IndexCodec.decode(ReadOnlyPacket.of(data))
+        val decode = IndexCodec.decode(ReadOnlyPacket.of(data), crc = 0)
         assertSame(index.formatType, decode.formatType)
         assertSame(index.format, decode.format)
         assertSame(index.flags, decode.flags)

@@ -380,6 +380,7 @@ internal object MasterIndexCodec {
             masterIndexFile.seek(indexFile.toLong() * indexLength)
             masterIndexFile.read(indexBuf, 0, indexLength)
 
+            val crc = CRC32()
             val decodeRes = decodeIndex(
                 indexFile = indexFile,
                 masterIndex = masterIndex,
@@ -388,7 +389,7 @@ internal object MasterIndexCodec {
                 dataBuf = dataBuf,
                 headerLength = headerLength,
                 dataLength = dataLength,
-                crc = CRC32()
+                crc = crc
             )
 
             // TODO: starts getting a bit sus here with err...
@@ -398,7 +399,12 @@ internal object MasterIndexCodec {
                 return Err(decodeErr)
             }
 
-            indexes[indexFile] = IndexCodec.decode(ReadOnlyPacket.of(decodeRes.get()!!))
+            val packet = ReadOnlyPacket.of(decodeRes.get()!!)
+            val index = IndexCodec.decode(
+                packet = packet,
+                crc = crc.hashCode()
+            )
+            indexes[indexFile] = index
         }
 
         return Ok(indexes)
@@ -440,7 +446,7 @@ internal object MasterIndexCodec {
 
 internal object IndexCodec {
 
-    fun decode(packet: ReadOnlyPacket): Index {
+    fun decode(packet: ReadOnlyPacket, crc: Int): Index {
         val formatType = packet.g1
         val format = when (formatType) {
             Format.NONE -> 0
@@ -534,7 +540,7 @@ internal object IndexCodec {
             groups[group.id] = group
         }
 
-        return Index(formatType, format, flags, groups)
+        return Index(crc, formatType, format, flags, groups)
     }
 
     fun encode(
