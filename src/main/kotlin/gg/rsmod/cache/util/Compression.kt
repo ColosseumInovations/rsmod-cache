@@ -16,7 +16,7 @@ import java.util.zip.GZIPOutputStream
  *
  * @author Tom
  */
-internal object Compression {
+object Compression {
 
     /**
      * The data is not compressed.
