@@ -63,127 +63,152 @@ class ReadWritePacket(buffer: ByteArray) {
     /**
      * @see [ReadOnlyPacket.g1s]
      */
-    val g1s = reader.g1s
+    val g1s: Int
+        get() = reader.g1s
 
     /**
      * @see [ReadOnlyPacket.g1s_altA]
      */
-    val g1s_altA = reader.g1s_altA
+    val g1s_altA: Int
+        get() = reader.g1s_altA
 
     /**
      * @see [ReadOnlyPacket.g1s_altC]
      */
-    val g1s_altC = reader.g1s_altC
+    val g1s_altC: Int
+        get() = reader.g1s_altC
 
     /**
      * @see [ReadOnlyPacket.g1s_altS]
      */
-    val g1s_altS = reader.g1s_altS
+    val g1s_altS: Int
+        get() = reader.g1s_altS
 
     /**
      * @see [ReadOnlyPacket.g1]
      */
-    val g1 = reader.g1
+    val g1: Int
+        get() = reader.g1
 
     /**
      * @see [ReadOnlyPacket.g1_altA]
      */
-    val g1_altA = reader.g1_altA
+    val g1_altA: Int
+        get() = reader.g1_altA
 
     /**
      * @see [ReadOnlyPacket.g1_altC]
      */
-    val g1_altC = reader.g1_altC
+    val g1_altC: Int
+        get() = reader.g1_altC
 
     /**
      * @see [ReadOnlyPacket.g1_altS]
      */
-    val g1_altS = reader.g1_altS
+    val g1_altS: Int
+        get() = reader.g1_altS
 
     /**
      * @see [ReadOnlyPacket.g2s]
      */
-    val g2s = reader.g2s
+    val g2s: Int
+        get() = reader.g2s
 
     /**
      * @see [ReadOnlyPacket.g2sLE]
      */
-    val g2sLE = reader.g2sLE
+    val g2sLE: Int
+        get() = reader.g2sLE
 
     /**
      * @see [ReadOnlyPacket.g2]
      */
-    val g2 = reader.g2
+    val g2: Int
+        get() = reader.g2
 
     /**
      * @see [ReadOnlyPacket.g2_altA]
      */
-    val g2_altA = reader.g2_altA
+    val g2_altA: Int
+        get() = reader.g2_altA
 
     /**
      * @see [ReadOnlyPacket.g2LE]
      */
-    val g2LE = reader.g2LE
+    val g2LE: Int
+        get() = reader.g2LE
 
     /**
      * @see [ReadOnlyPacket.g2LE_altA]
      */
-    val g2LE_altA = reader.g2LE_altA
+    val g2LE_altA: Int
+        get() = reader.g2LE_altA
 
     /**
      * @see [ReadOnlyPacket.g3s]
      */
-    val g3s = reader.g3s
+    val g3s: Int
+        get() = reader.g3s
 
     /**
      * @see [ReadOnlyPacket.g3]
      */
-    val g3 = reader.g3
+    val g3: Int
+        get() = reader.g3
 
     /**
      * @see [ReadOnlyPacket.g4]
      */
-    val g4 = reader.g4
+    val g4: Int
+        get() = reader.g4
 
     /**
      * @see [ReadOnlyPacket.g4_alt1]
      */
-    val g4_alt1 = reader.g4_alt1
+    val g4_alt1: Int
+        get() = reader.g4_alt1
 
     /**
      * @see [ReadOnlyPacket.g4_alt2]
      */
-    val g4_alt2 = reader.g4_alt2
+    val g4_alt2: Int
+        get() = reader.g4_alt2
 
     /**
      * @see [ReadOnlyPacket.g4_alt3]
      */
-    val g4_alt3 = reader.g4_alt3
+    val g4_alt3: Int
+        get() = reader.g4_alt3
 
     /**
      * @see [ReadOnlyPacket.gsmart1or2]
      */
-    val gsmart1or2 = reader.gsmart1or2
+    val gsmart1or2: Int
+        get() = reader.gsmart1or2
 
     /**
      * @see [ReadOnlyPacket.gsmart2or4]
      */
-    val gsmart2or4 = reader.gsmart2or4
+    val gsmart2or4: Int
+        get() = reader.gsmart2or4
 
     /**
      * @see [ReadOnlyPacket.g8]
      */
-    val g8 = reader.g8
+    val g8: Long
+        get() = reader.g8
 
     /**
      * @see [ReadOnlyPacket.gfloat]
      */
-    val gfloat = reader.gfloat
+    val gfloat: Float
+        get() = reader.gfloat
 
     /**
      * @see [ReadOnlyPacket.gjstr]
      */
-    val gjstr = reader.gjstr
+    val gjstr: String
+        get() = reader.gjstr
 
     /**
      * @see [ReadOnlyPacket.gdata]
