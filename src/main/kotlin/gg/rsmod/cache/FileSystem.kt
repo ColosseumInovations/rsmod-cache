@@ -67,6 +67,18 @@ open class FileSystem(
 ) : AutoCloseable {
 
     /**
+     * Get a non-mutable version of [indexes].
+     */
+    val indexMap: Map<Int, Index>
+        get() = indexes
+
+    /**
+     * Get a non-mutable version of [archives].
+     */
+    val archiveMap: Map<Int, Archive>
+        get() = archives
+
+    /**
      * Load all components needed to read every archive and index
      * in the file system.
      */
